@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Discos de Papá · CDs en Lima</title>
+  <meta name="description" content="CDs nuevos y usados de rock y pop en Lima. Pide por WhatsApp, entrega en punto acordado. Yape, Plin, efectivo o transferencia.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ===== CABECERA ===== -->
+  <header class="hero">
+    <div class="hero__inner">
+      <div class="hero__text">
+        <h1 id="nombre-tienda">Discos de Papá</h1>
+        <p id="lema" class="hero__lema"></p>
+        <a id="btn-whatsapp-hero" class="btn btn--wa" target="_blank" rel="noopener">
+          Escríbenos por WhatsApp
+        </a>
+      </div>
+      <div class="cd" aria-hidden="true"></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===== BUSCADOR Y FILTROS ===== -->
+    <section class="filtros" aria-label="Buscar y filtrar">
+      <input id="buscar" type="search" placeholder="Busca artista o álbum…" autocomplete="off">
+      <div class="filtros__fila">
+        <div class="chips" role="group" aria-label="Estado">
+          <button class="chip is-active" data-estado="">Todos</button>
+          <button class="chip" data-estado="Nuevo">Nuevos</button>
+          <button class="chip" data-estado="Usado">Usados</button>
+        </div>
+        <select id="genero" aria-label="Género">
+          <option value="">Todos los géneros</option>
+        </select>
+        <select id="orden" aria-label="Ordenar">
+          <option value="novedad">Novedades primero</option>
+          <option value="precio-asc">Precio: menor a mayor</option>
+          <option value="precio-desc">Precio: mayor a menor</option>
+          <option value="artista">Artista A–Z</option>
+          <option value="anio">Año (más antiguos)</option>
+        </select>
+      </div>
+      <p id="contador" class="contador"></p>
+    </section>
+
+    <!-- ===== CATÁLOGO ===== -->
+    <section id="catalogo" class="catalogo" aria-live="polite"></section>
+
+    <div id="vacio" class="vacio" hidden>
+      <p>No encontramos ese disco en el catálogo.</p>
+      <a id="btn-pedido" class="btn btn--wa" target="_blank" rel="noopener">Pregúntanos por WhatsApp, quizá lo tenemos</a>
+    </div>
+
+    <!-- ===== CÓMO COMPRAR ===== -->
+    <section class="como" aria-labelledby="como-titulo">
+      <h2 id="como-titulo">¿Cómo comprar?</h2>
+      <ol class="pasos">
+        <li><span>1</span><strong>Elige tu disco</strong><p>Toca “Lo quiero” y se abre WhatsApp con el mensaje listo.</p></li>
+        <li><span>2</span><strong>Coordinamos</strong><p>Te confirmamos disponibilidad y acordamos el punto de entrega.</p></li>
+        <li><span>3</span><strong>Recíbelo y paga</strong><p id="pagos-texto"></p></li>
+      </ol>
+      <div class="info">
+        <div>
+          <h3>Puntos de entrega en Lima</h3>
+          <ul id="puntos"></ul>
+        </div>
+        <div>
+          <h3>Formas de pago</h3>
+          <ul id="pagos" class="tags"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p id="pie-nombre"></p>
+    <p id="redes" class="redes"></p>
+  </footer>
+
+  <!-- Orden importante: primero configuración y datos, luego la lógica -->
+  <script src="config.js"></script>
+  <script src="discos.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

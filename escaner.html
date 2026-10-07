@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Escáner de discos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="escaner.css">
+</head>
+<body>
+
+  <header class="barra">
+    <a href="index.html" class="barra__volver">← Catálogo</a>
+    <strong class="barra__titulo">Escáner</strong>
+    <span id="conteo" class="barra__conteo">0 guardados</span>
+  </header>
+
+  <main class="esc">
+
+    <!-- Aviso cuando todavía no hay hoja de Google configurada -->
+    <p id="aviso-demo" class="aviso" hidden>
+      <strong>Modo prueba:</strong> todavía no está conectada la hoja de Google
+      (falta <code>hojaURL</code> en <code>config.js</code>). Puedes probar el escaneo, pero los discos no se guardan.
+    </p>
+
+    <!-- Se muestra una sola vez por celular, para poner la clave -->
+    <section id="config" class="tarjeta" hidden>
+      <h2>Conectar con la hoja</h2>
+      <p class="msg">Escribe la clave que pusiste en la hoja de Google. Este celular la recordará.</p>
+      <form id="form-clave" class="fila">
+        <input id="clave" type="password" placeholder="Clave del escáner" autocomplete="current-password" required>
+        <button class="btn btn--principal">Conectar</button>
+      </form>
+      <p id="config-msg" class="msg msg--error"></p>
+    </section>
+
+    <!-- 1. Leer el código de barras -->
+    <section class="tarjeta">
+      <div id="lector" class="lector"></div>
+      <button id="btn-camara" class="btn btn--principal btn--ancho" type="button">Encender cámara</button>
+      <form id="form-codigo" class="fila">
+        <input id="codigo" inputmode="numeric" placeholder="O escribe el código de barras" autocomplete="off">
+        <button class="btn btn--sec">Buscar</button>
+      </form>
+      <button id="btn-manual" class="enlace" type="button">¿El disco no tiene código? Escríbelo a mano</button>
+      <p id="estado-busqueda" class="msg" aria-live="polite"></p>
+    </section>
+
+    <!-- 2. Revisar datos y poner precio -->
+    <form id="form-disco" class="tarjeta" hidden>
+      <div class="vista">
+        <div id="vista-portada" class="vista__portada"></div>
+        <div class="vista__info">
+          <p id="vista-codigo" class="msg"></p>
+          <p id="vista-duplicado" class="aviso aviso--chico" hidden></p>
+        </div>
+      </div>
+
+      <div id="alternativas" class="alternativas" hidden></div>
+
+      <label class="campo">Artista <input name="artista" required autocomplete="off"></label>
+      <label class="campo">Álbum <input name="album" required autocomplete="off"></label>
+      <div class="fila">
+        <label class="campo">Año <input name="anio" inputmode="numeric" maxlength="4" autocomplete="off"></label>
+        <label class="campo">Género <input name="genero" list="generos" autocomplete="off"></label>
+      </div>
+      <datalist id="generos">
+        <option value="Rock"><option value="Pop"><option value="Pop Rock"><option value="Rock Alternativo">
+        <option value="Metal"><option value="Punk"><option value="Synth Pop"><option value="Soul / R&B">
+        <option value="Baladas"><option value="Rock en español"><option value="Otro">
+      </datalist>
+
+      <fieldset class="grupo">
+        <legend>Estado</legend>
+        <div class="segmento">
+          <label><input type="radio" name="estado" value="Usado" checked><span>Usado</span></label>
+          <label><input type="radio" name="estado" value="Nuevo"><span>Nuevo</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="grupo">
+        <legend>Precio</legend>
+        <div id="precios" class="precios"></div>
+        <div class="fila">
+          <input name="precio" inputmode="decimal" placeholder="Otro precio (S/)" autocomplete="off">
+          <button type="button" id="btn-consultar" class="chip-precio">Consultar</button>
+        </div>
+      </fieldset>
+
+      <label class="campo">Comentario (opcional)
+        <input name="detalle" placeholder="Ej. caja con rayones leves" autocomplete="off">
+      </label>
+      <label class="check"><input type="checkbox" name="novedad"> Marcar como novedad (“Llegó”)</label>
+
+      <div class="fila fila--botones">
+        <button type="button" id="btn-cancelar" class="btn btn--sec">Cancelar</button>
+        <button id="btn-guardar" class="btn btn--principal">Guardar disco</button>
+      </div>
+    </form>
+
+    <!-- 3. Lo que se guardó -->
+    <section class="tarjeta">
+      <h2>Guardados ahora</h2>
+      <ul id="recientes" class="recientes"><li class="msg">Todavía nada.</li></ul>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="config.js"></script>
+  <script src="escaner.js"></script>
+</body>
+</html>
