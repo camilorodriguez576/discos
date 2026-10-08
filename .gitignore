@@ -2,3 +2,8 @@
 Propuesta-tienda-de-discos.pdf
 letrero/
 logo/
+
+# Respaldo privado (va al repositorio cdsolution/archivos-privados)
+.git-privado/
+respaldos/
+respaldar.ps1
