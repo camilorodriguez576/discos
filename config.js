@@ -5,8 +5,8 @@
 // ============================================================
 
 const CONFIG = {
-  // Nombre provisional (lo cambiamos cuando elijan el definitivo)
-  nombreTienda: "Discos de Papá",
+  // Nombre de la tienda
+  nombreTienda: "CD'solution",
   lema: "Elige tus discos, arma tu pedido y lo coordinamos por WhatsApp. Entregas en toda Lima.",
 
   // Número de WhatsApp con código de país (51 = Perú), sin espacios ni "+"
