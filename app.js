@@ -97,14 +97,16 @@ function tarjeta(d) {
              data-artista="${escapar(d.artista)}" data-album="${escapar(d.album)}" data-portada="${escapar(d.portada || "")}">
           ${etiquetasEstado(d)}
           ${escapar(d.album)}
-          <span class="sticker${tienePrecio(d) ? "" : " sticker--consultar"}">${textoPrecio(d)}</span>
         </div>
       </button>
       <div class="disco__info">
         <h3 class="disco__album" data-ficha="${c}">${escapar(d.album)}</h3>
         <p class="disco__artista">${escapar(d.artista)}</p>
-        <p class="disco__stock${d.stock > 1 ? "" : " disco__stock--uno"}">${textoStock(d)}</p>
-        <p class="disco__meta mono"><span class="disco__num">Nº ${String(d.num).padStart(3, "0")}</span> · ${[d.anio, d.genero].filter(Boolean).map(escapar).join(" · ")}</p>
+        <p class="disco__meta">${["CD", d.anio, d.genero].filter(Boolean).map(escapar).join(" · ")}</p>
+        <p class="disco__compra">
+          <span class="disco__stock${d.stock > 1 ? "" : " disco__stock--uno"}">${textoStock(d)}</span>
+          <span class="disco__precio${tienePrecio(d) ? "" : " disco__precio--consultar"}">${textoPrecio(d)}</span>
+        </p>
       </div>
       <button type="button" class="btn btn--agregar" data-clave="${c}"
               aria-pressed="${enPedido}">${enPedido ? "✓ En tu pedido" : "Agregar al pedido"}</button>
@@ -141,6 +143,24 @@ function pintarCatalogo() {
   }
 
   document.querySelectorAll(".portada").forEach((el) => observador.observe(el));
+}
+
+// Estante "Recién llegados": solo si hay novedades y no son todo el catálogo
+function pintarEstante() {
+  const nuevos = disponibles.filter((d) => d.novedad).slice(0, 12);
+  const estante = document.getElementById("estante-nuevos");
+  estante.hidden = !nuevos.length || nuevos.length === disponibles.length;
+  if (estante.hidden) return;
+  document.getElementById("nuevos").innerHTML = nuevos.map(tarjeta).join("");
+  document.getElementById("nuevos-cuenta").textContent = `${nuevos.length} disco${nuevos.length === 1 ? "" : "s"}`;
+  document.querySelectorAll("#nuevos .portada").forEach((el) => observador.observe(el));
+}
+
+// Vuelve a pintar todo lo que muestra discos (tras agregar o quitar del pedido)
+function pintarDiscos() {
+  pintarCatalogo();
+  pintarEstante();
+  pintarBotonHistoria();
 }
 
 // ---------- Portadas automáticas ----------
@@ -363,6 +383,95 @@ function alternarEnPedido(c) {
   pintarBarraPedido();
 }
 
+// ---------- Historias: "la historia detrás del disco" ----------
+// Primero las escritas en historias.js; si un disco no tiene, se busca en Wikipedia.
+
+const claveHistoria = (d) => `${d.artista}|${d.album}`;
+const CLAVE_HISTORIAS = "historias-v1";
+let cacheHistorias = {};
+try { cacheHistorias = JSON.parse(localStorage.getItem(CLAVE_HISTORIAS)) || {}; } catch { /* sin almacenamiento */ }
+
+async function historiaWikipedia(d, idioma) {
+  const q = encodeURIComponent(`${d.album} ${d.artista} ${idioma === "es" ? "álbum" : "album"}`);
+  const r = await fetch(`https://${idioma}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${q}&srlimit=5&format=json&origin=*`);
+  const resultados = (await r.json())?.query?.search || [];
+  const artista = normalizar(d.artista).replace(/^the /, "");
+  for (const h of resultados) {
+    if (!normalizar(h.title).includes(normalizar(d.album).slice(0, 12))) continue;
+    const s = await (await fetch(`https://${idioma}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(h.title)}`)).json();
+    // Solo si de verdad habla de este disco (y no de otro con el mismo nombre)
+    if (s.type === "standard" && normalizar(s.extract).includes(artista)) {
+      return { texto: s.extract, fuente: s.content_urls?.desktop?.page, idioma };
+    }
+  }
+  return null;
+}
+
+async function obtenerHistoria(d) {
+  const k = claveHistoria(d);
+  if (HISTORIAS[k]) return { ...HISTORIAS[k], idioma: "es" };
+  if (k in cacheHistorias) return cacheHistorias[k];
+  let h = null;
+  try { h = (await historiaWikipedia(d, "es")) || (await historiaWikipedia(d, "en")); } catch { /* sin conexión */ }
+  cacheHistorias[k] = h;
+  try { localStorage.setItem(CLAVE_HISTORIAS, JSON.stringify(cacheHistorias)); } catch { /* sin almacenamiento */ }
+  return h;
+}
+
+// Carrusel del encabezado: discos en venta que tienen historia escrita
+const carrusel = { lista: [], i: 0, reloj: null };
+const sinMovimiento = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function pintarBotonHistoria() {
+  const d = carrusel.lista[carrusel.i];
+  if (!d) return;
+  const esta = pedido.has(claveDisco(d));
+  $("hist-agregar").setAttribute("aria-pressed", esta);
+  $("hist-agregar").textContent = esta ? "✓ En tu pedido" : "Agregar al pedido";
+}
+
+function mostrarHistoria(i) {
+  const lista = carrusel.lista;
+  carrusel.i = (i + lista.length) % lista.length;
+  const d = lista[carrusel.i];
+  $("hist-album").textContent = d.album;
+  $("hist-artista").textContent = d.artista + (d.anio ? ` · ${d.anio}` : "");
+  $("hist-texto").textContent = HISTORIAS[claveHistoria(d)].texto;
+  $("hist-meta").textContent = `${textoStock(d)} · ${textoPrecio(d)} · ${d.estado}`;
+  $("hist-arte").setAttribute("aria-label", `Ver ${d.album} de ${d.artista}`);
+  $("hist-arte").classList.remove("cargada");
+  $("hist-portada").removeAttribute("src");
+  $("hist-fondo").style.backgroundImage = "";
+  urlPortada(d).then((url) => {
+    if (!url || carrusel.lista[carrusel.i] !== d) return;
+    $("hist-portada").src = url;
+    $("hist-fondo").style.backgroundImage = `url("${url}")`;
+  });
+  document.querySelectorAll("#hist-puntos button").forEach((b, k) => b.setAttribute("aria-current", k === carrusel.i));
+  pintarBotonHistoria();
+}
+document.getElementById("hist-portada").addEventListener("load", () => document.getElementById("hist-arte").classList.add("cargada"));
+
+function avanzarSolo() {
+  clearInterval(carrusel.reloj);
+  if (sinMovimiento() || carrusel.lista.length < 2) return;
+  carrusel.reloj = setInterval(() => mostrarHistoria(carrusel.i + 1), 9000);
+}
+
+function iniciarHistorias() {
+  carrusel.lista = disponibles
+    .filter((d) => HISTORIAS[claveHistoria(d)])
+    .sort((a, b) => (b.novedad === true) - (a.novedad === true))
+    .slice(0, 6);
+  $("historias").hidden = !carrusel.lista.length;
+  if (!carrusel.lista.length) return;
+  $("hist-puntos").innerHTML = carrusel.lista
+    .map((d, k) => `<button type="button" aria-label="Historia ${k + 1}: ${escapar(d.album)}"></button>`).join("");
+  document.querySelector(".historias__nav").hidden = carrusel.lista.length < 2;
+  mostrarHistoria(0);
+  avanzarSolo();
+}
+
 // ---------- Ficha del disco (estuche en 3D) ----------
 
 const $ = (id) => document.getElementById(id);
@@ -452,6 +561,15 @@ async function abrirFicha(c) {
     ? `Hola, me interesa el CD "${d.album}" de ${d.artista} (${d.estado}, ${formatoPrecio(d.precio)}). ¿Sigue disponible?`
     : `Hola, me interesa el CD "${d.album}" de ${d.artista} (${d.estado}). ¿Cuál es su precio?`);
 
+  $("ficha-historia").hidden = true;
+  obtenerHistoria(d).then((h) => {
+    if (fichaActual !== d || !h) return;
+    $("ficha-historia-texto").textContent = h.texto;
+    $("ficha-historia-fuente").href = h.fuente || "https://es.wikipedia.org";
+    $("ficha-historia-fuente").textContent = h.idioma === "en" ? "Fuente: Wikipedia (en inglés)" : "Fuente: Wikipedia";
+    $("ficha-historia").hidden = false;
+  });
+
   $("canciones").innerHTML = "";
   $("canciones-estado").textContent = "Buscando las canciones…";
   $("canciones-estado").hidden = false;
@@ -507,15 +625,14 @@ $("ficha").addEventListener("close", () => { fichaActual = null; });
 $("ficha-agregar").addEventListener("click", () => {
   alternarEnPedido(claveDisco(fichaActual));
   pintarBotonFicha();
-  pintarCatalogo();
+  pintarDiscos();
 });
 
 // ---------- Portadas que se inclinan con el mouse ----------
 // Solo en computadora (con mouse); en el celular el CD ya asoma de costado.
 if (matchMedia("(hover: hover) and (pointer: fine)").matches &&
     !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-  const catalogo = $("catalogo");
-  catalogo.addEventListener("pointermove", (e) => {
+  document.addEventListener("pointermove", (e) => {
     const caja = e.target.closest(".disco__abrir");
     if (!caja) return;
     const portada = caja.querySelector(".portada");
@@ -528,7 +645,7 @@ if (matchMedia("(hover: hover) and (pointer: fine)").matches &&
     portada.style.setProperty("--bx", `${x * 100}%`);
     portada.style.setProperty("--by", `${y * 100}%`);
   });
-  catalogo.addEventListener("pointerout", (e) => {
+  document.addEventListener("pointerout", (e) => {
     const caja = e.target.closest(".disco__abrir");
     if (!caja || caja.contains(e.relatedTarget)) return;
     caja.classList.remove("inclinando");
@@ -539,16 +656,36 @@ if (matchMedia("(hover: hover) and (pointer: fine)").matches &&
 
 // ---------- Eventos ----------
 
-document.getElementById("catalogo").addEventListener("click", (e) => {
+// Tarjetas del catálogo y del estante: abrir la ficha o agregar al pedido
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".disco")) return;
   const abrir = e.target.closest("[data-ficha]");
   if (abrir) return abrirFicha(abrir.dataset.ficha);
   const boton = e.target.closest(".btn--agregar");
   if (!boton) return;
   alternarEnPedido(boton.dataset.clave);
-  const esta = pedido.has(boton.dataset.clave);
-  boton.setAttribute("aria-pressed", esta);
-  boton.textContent = esta ? "✓ En tu pedido" : "Agregar al pedido";
+  pintarDiscos();
+  document.querySelector(`.disco .btn--agregar[data-clave="${CSS.escape(boton.dataset.clave)}"]`)?.focus();
 });
+
+// Encabezado de historias
+$("hist-ver").addEventListener("click", () => abrirFicha(claveDisco(carrusel.lista[carrusel.i])));
+$("hist-arte").addEventListener("click", () => abrirFicha(claveDisco(carrusel.lista[carrusel.i])));
+$("hist-agregar").addEventListener("click", () => {
+  alternarEnPedido(claveDisco(carrusel.lista[carrusel.i]));
+  pintarDiscos();
+});
+$("hist-prev").addEventListener("click", () => { mostrarHistoria(carrusel.i - 1); avanzarSolo(); });
+$("hist-next").addEventListener("click", () => { mostrarHistoria(carrusel.i + 1); avanzarSolo(); });
+$("hist-puntos").addEventListener("click", (e) => {
+  const punto = e.target.closest("button");
+  if (!punto) return;
+  mostrarHistoria([...punto.parentNode.children].indexOf(punto));
+  avanzarSolo();
+});
+// Se detiene mientras la persona lo mira o lo usa con el teclado
+["mouseenter", "focusin"].forEach((ev) => $("historias").addEventListener(ev, () => clearInterval(carrusel.reloj)));
+["mouseleave", "focusout"].forEach((ev) => $("historias").addEventListener(ev, avanzarSolo));
 
 document.getElementById("btn-ver-pedido").addEventListener("click", () => {
   pintarResumen();
@@ -562,7 +699,7 @@ document.getElementById("lineas").addEventListener("click", (e) => {
   if (quitar) {
     alternarEnPedido(quitar.dataset.clave);
     pintarResumen();
-    pintarCatalogo();
+    pintarDiscos();
     return;
   }
   // − / + : cuántas copias lleva, entre 1 y el stock
@@ -585,7 +722,7 @@ document.getElementById("btn-enviar").addEventListener("click", () => {
   pedido.clear();
   guardarPedido();
   pintarBarraPedido();
-  pintarCatalogo();
+  pintarDiscos();
   document.getElementById("resumen").close();
 });
 
@@ -672,7 +809,8 @@ async function iniciar() {
   disponibles.forEach((d, i) => { d.num = i + 1; });
   llenarGeneros();
   recuperarPedido();
-  pintarCatalogo();
+  pintarDiscos();
+  iniciarHistorias();
   pintarBarraPedido();
 }
 

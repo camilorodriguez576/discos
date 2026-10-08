@@ -13,34 +13,60 @@
 </head>
 <body>
 
-  <!-- ===== BARRA SUPERIOR ===== -->
-  <header class="barra">
+  <!-- ===== BARRA SUPERIOR (con buscador, como en Discogs) ===== -->
+  <header class="nav">
     <a class="marca" href="./">
       <img class="marca__logo" src="marca.svg" alt="" width="56" height="34">
       <span id="nombre-tienda">CD'solution</span>
     </a>
+    <input id="buscar" type="search" placeholder="Busca artista o álbum…" autocomplete="off" aria-label="Buscar disco">
     <a id="btn-whatsapp-hero" class="btn btn--wa btn--chico" target="_blank" rel="noopener">WhatsApp</a>
   </header>
   <div class="franja-retro" aria-hidden="true"></div>
 
-  <!-- ===== PORTADA ===== -->
-  <section class="intro">
-    <div class="intro__texto">
-      <p class="mono intro__eyebrow">CDs nuevos y usados · Lima</p>
-      <h1>Rock y pop en disco, <em>listos para sonar.</em></h1>
-      <p id="lema" class="intro__lema"></p>
+  <!-- ===== HISTORIAS: un disco destacado y su historia ===== -->
+  <section id="historias" class="historias" aria-roledescription="carrusel" aria-label="Historias de los discos" hidden>
+    <div id="hist-fondo" class="historias__fondo" aria-hidden="true"></div>
+    <div class="historias__inner">
+      <button type="button" id="hist-arte" class="historias__arte" aria-label="Ver este disco">
+        <span class="historias__cd" aria-hidden="true"></span>
+        <img id="hist-portada" alt="">
+      </button>
+      <div class="historias__texto" aria-live="polite">
+        <p class="mono historias__eyebrow">La historia detrás del disco</p>
+        <h1 id="hist-album"></h1>
+        <p id="hist-artista" class="historias__artista"></p>
+        <p id="hist-texto" class="historias__relato"></p>
+        <p id="hist-meta" class="historias__meta"></p>
+        <div class="historias__acciones">
+          <button type="button" id="hist-ver" class="btn btn--claro">Ver el disco</button>
+          <button type="button" id="hist-agregar" class="btn btn--agregar">Agregar al pedido</button>
+        </div>
+      </div>
     </div>
-    <!-- Estuche abierto con el CD saliendo: solo decoración -->
-    <div class="intro__arte" aria-hidden="true">
-      <div class="arte__estuche"></div>
-      <div class="arte__cd"></div>
+    <div class="historias__nav">
+      <button type="button" id="hist-prev" aria-label="Historia anterior">←</button>
+      <div id="hist-puntos" class="historias__puntos"></div>
+      <button type="button" id="hist-next" aria-label="Historia siguiente">→</button>
     </div>
   </section>
 
   <main>
-    <!-- ===== BUSCADOR Y FILTROS ===== -->
-    <section class="filtros" aria-label="Buscar y filtrar">
-      <input id="buscar" type="search" placeholder="Busca artista o álbum…" autocomplete="off" aria-label="Buscar disco">
+    <!-- ===== ESTANTE: recién llegados ===== -->
+    <section id="estante-nuevos" class="estante" aria-labelledby="nuevos-titulo" hidden>
+      <div class="seccion-cabeza">
+        <h2 id="nuevos-titulo">Recién llegados</h2>
+        <span id="nuevos-cuenta" class="mono"></span>
+      </div>
+      <div id="nuevos" class="estante__fila"></div>
+    </section>
+
+    <!-- ===== CATÁLOGO COMPLETO ===== -->
+    <div class="seccion-cabeza seccion-cabeza--catalogo">
+      <h2>Todo el catálogo</h2>
+      <p id="lema" class="seccion-cabeza__lema"></p>
+    </div>
+    <section class="filtros" aria-label="Filtrar">
       <div class="filtros__fila">
         <div class="chips" role="group" aria-label="Estado">
           <button class="chip is-active" data-estado="">Todos</button>
@@ -145,6 +171,11 @@
         <button type="button" id="ficha-agregar" class="btn btn--agregar"></button>
       </div>
       <a id="ficha-preguntar" class="ficha__preguntar" target="_blank" rel="noopener">Preguntar por este disco en WhatsApp</a>
+      <section id="ficha-historia" class="relato" aria-labelledby="historia-titulo" hidden>
+        <h3 id="historia-titulo">La historia</h3>
+        <p id="ficha-historia-texto"></p>
+        <a id="ficha-historia-fuente" class="relato__fuente" target="_blank" rel="noopener">Fuente: Wikipedia</a>
+      </section>
       <section class="canciones" aria-labelledby="canciones-titulo">
         <h3 id="canciones-titulo">Canciones</h3>
         <p id="canciones-estado" class="canciones__estado"></p>
@@ -178,6 +209,7 @@
   <!-- Orden importante: primero configuración y datos, luego la lógica -->
   <script src="config.js"></script>
   <script src="discos.js"></script>
+  <script src="historias.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
