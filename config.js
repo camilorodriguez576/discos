@@ -13,11 +13,10 @@ const CONFIG = {
   // Ejemplo: si el número es 987 654 321  ->  "51987654321"
   whatsapp: "51999999999",
 
-  // Puntos de entrega habituales en Lima
+  // Puntos de entrega en Lima (se coordinan en cada pedido)
   puntosEntrega: [
-    "Estación del Metropolitano o Metro más cercana",
-    "Centro comercial (coordinamos cuál)",
-    "Puesto en el bazar (fines de semana)",
+    "Coordinamos el punto de entrega por WhatsApp en cada pedido",
+    "Por ejemplo: una estación del Metro o Metropolitano, o un centro comercial",
   ],
 
   // Formas de pago aceptadas

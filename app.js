@@ -87,9 +87,7 @@ function discosFiltrados() {
 // ---------- Catálogo ----------
 
 function tarjeta(d) {
-  const mensaje = tienePrecio(d)
-    ? `Hola, me interesa el CD "${d.album}" de ${d.artista} (${d.estado}, ${formatoPrecio(d.precio)}). ¿Sigue disponible?`
-    : `Hola, me interesa el CD "${d.album}" de ${d.artista} (${d.estado}). ¿Cuál es su precio?`;
+  const enPedido = pedido.has(claveDisco(d));
   const claseEstado = d.estado === "Nuevo" ? "etq--nuevo" : "etq--usado";
   return `
     <article class="disco">
@@ -108,7 +106,8 @@ function tarjeta(d) {
         ${d.detalle ? `<p class="disco__detalle">${escapar(d.detalle)}</p>` : ""}
         <div class="disco__pie">
           <span class="precio${tienePrecio(d) ? "" : " precio--consultar"}">${textoPrecio(d)}</span>
-          <a class="btn btn--wa" href="${linkWhatsApp(mensaje)}" target="_blank" rel="noopener">Lo quiero</a>
+          <button type="button" class="btn btn--agregar" data-clave="${escapar(claveDisco(d))}"
+                  aria-pressed="${enPedido}">${enPedido ? "✓ En tu pedido" : "Agregar al pedido"}</button>
         </div>
       </div>
     </article>`;
@@ -125,13 +124,13 @@ function pintarCatalogo() {
   if (disponibles.length === 0) {
     // Todavía no hay discos en la hoja (por ejemplo, mientras se escanean)
     document.getElementById("contador").textContent = "";
-    vacio.querySelector("p").textContent = "Estamos subiendo nuestros discos. Mientras tanto, pregúntanos por el que buscas.";
-    document.getElementById("btn-pedido").textContent = "Pregúntanos por WhatsApp";
-    document.getElementById("btn-pedido").href = linkWhatsApp(`Hola, vi la página de ${CONFIG.nombreTienda}. ¿Tienen este disco?`);
+    document.getElementById("vacio-titulo").textContent = "Estamos subiendo nuestros discos";
+    document.getElementById("vacio-texto").textContent = "Dinos qué disco buscas y te avisamos por WhatsApp si lo tenemos.";
   } else if (lista.length === 0) {
-    const buscado = filtro.texto ? `"${filtro.texto}"` : "un disco";
-    document.getElementById("btn-pedido").href =
-      linkWhatsApp(`Hola, ¿tienen ${buscado}? No lo vi en el catálogo.`);
+    document.getElementById("vacio-titulo").textContent = "No lo tenemos ahora";
+    document.getElementById("vacio-texto").textContent = filtro.texto
+      ? `¿Buscas “${filtro.texto}”? Déjanos tu nombre y te avisamos por WhatsApp apenas llegue.`
+      : "Déjanos tu nombre y te avisamos por WhatsApp apenas llegue.";
   }
 
   document.querySelectorAll(".portada").forEach((el) => observador.observe(el));
@@ -243,7 +242,121 @@ const observador = new IntersectionObserver((entradas) => {
   });
 }, { rootMargin: "200px" });
 
+// ---------- Mi pedido ----------
+// El cliente junta varios discos y los manda en un solo mensaje de WhatsApp.
+// Se guarda en el navegador para que no se pierda si recarga la página.
+
+const CLAVE_PEDIDO = "pedido-v1";
+const claveDisco = (d) => `${d.artista}|${d.album}|${d.estado}`;
+const pedido = new Map(); // clave -> disco
+
+function guardarPedido() {
+  try { localStorage.setItem(CLAVE_PEDIDO, JSON.stringify([...pedido.keys()])); } catch { /* sin almacenamiento */ }
+}
+
+// Al cargar, recupera el pedido guardado (sin los discos que ya se vendieron)
+function recuperarPedido() {
+  let claves = [];
+  try { claves = JSON.parse(localStorage.getItem(CLAVE_PEDIDO)) || []; } catch { /* sin almacenamiento */ }
+  const porClave = new Map(disponibles.map((d) => [claveDisco(d), d]));
+  claves.forEach((c) => porClave.has(c) && pedido.set(c, porClave.get(c)));
+}
+
+const totalPedido = () => [...pedido.values()].filter(tienePrecio).reduce((s, d) => s + d.precio, 0);
+const aConsultar = () => [...pedido.values()].filter((d) => !tienePrecio(d)).length;
+const formaElegida = () => document.querySelector('input[name="forma"]:checked')?.value || "";
+
+function pintarBarraPedido() {
+  const n = pedido.size;
+  document.getElementById("barra-pedido").hidden = n === 0;
+  document.body.classList.toggle("con-pedido", n > 0);
+  if (!n) return;
+  document.getElementById("pedido-cuenta").textContent = `Tu pedido: ${n} disco${n === 1 ? "" : "s"}`;
+  const consultar = aConsultar();
+  document.getElementById("pedido-total").textContent =
+    `Total ${formatoPrecio(totalPedido())}${consultar ? ` + ${consultar} a consultar` : ""}`;
+}
+
+function mensajePedido() {
+  const lineas = [...pedido.values()].map((d) =>
+    `• ${d.album} – ${d.artista} (${d.estado}) ${tienePrecio(d) ? formatoPrecio(d.precio) : "precio a consultar"}`);
+  return `Hola, quiero pedir estos CDs:\n${lineas.join("\n")}\n\n` +
+    `Total: ${formatoPrecio(totalPedido())}${aConsultar() ? " + los de precio a consultar" : ""}\n` +
+    `Pago: ${formaElegida()}\n¿Están disponibles?`;
+}
+
+function pintarResumen() {
+  if (!pedido.size) return document.getElementById("resumen").close();
+  document.getElementById("lineas").innerHTML = [...pedido.entries()].map(([c, d]) => `
+    <li>
+      <span><b>${escapar(d.album)}</b><small>${escapar(d.artista)} · ${escapar(d.estado)}</small></span>
+      <span class="monto">${textoPrecio(d)}</span>
+      <button type="button" class="quitar" data-clave="${escapar(c)}" aria-label="Quitar ${escapar(d.album)}">×</button>
+    </li>`).join("");
+  document.getElementById("total-monto").textContent = formatoPrecio(totalPedido());
+  document.getElementById("total-nota").textContent = aConsultar() ? "Total sin los de “consultar”" : "Total";
+  document.getElementById("btn-enviar").href = linkWhatsApp(mensajePedido());
+}
+
+function pintarFormasPago() {
+  document.getElementById("formas").insertAdjacentHTML("beforeend", CONFIG.pagos.map((p, i) => `
+    <label><input type="radio" name="forma" value="${escapar(p)}"${i === 0 ? " checked" : ""}> ${escapar(p)}</label>`).join(""));
+}
+
+function alternarEnPedido(c) {
+  if (pedido.has(c)) pedido.delete(c);
+  else pedido.set(c, disponibles.find((d) => claveDisco(d) === c));
+  guardarPedido();
+  pintarBarraPedido();
+}
+
 // ---------- Eventos ----------
+
+document.getElementById("catalogo").addEventListener("click", (e) => {
+  const boton = e.target.closest(".btn--agregar");
+  if (!boton) return;
+  alternarEnPedido(boton.dataset.clave);
+  const esta = pedido.has(boton.dataset.clave);
+  boton.setAttribute("aria-pressed", esta);
+  boton.textContent = esta ? "✓ En tu pedido" : "Agregar al pedido";
+});
+
+document.getElementById("btn-ver-pedido").addEventListener("click", () => {
+  pintarResumen();
+  document.getElementById("resumen").showModal();
+});
+
+document.getElementById("resumen-cerrar").addEventListener("click", () => document.getElementById("resumen").close());
+
+document.getElementById("lineas").addEventListener("click", (e) => {
+  const quitar = e.target.closest(".quitar");
+  if (!quitar) return;
+  alternarEnPedido(quitar.dataset.clave);
+  pintarResumen();
+  pintarCatalogo();
+});
+
+document.getElementById("formas").addEventListener("change", () => {
+  document.getElementById("btn-enviar").href = linkWhatsApp(mensajePedido());
+});
+
+// Una vez enviado, el pedido se vacía para que pueda armar otro
+document.getElementById("btn-enviar").addEventListener("click", () => {
+  pedido.clear();
+  guardarPedido();
+  pintarBarraPedido();
+  pintarCatalogo();
+  document.getElementById("resumen").close();
+});
+
+// "Avísame cuando llegue": abre WhatsApp con el pedido del disco que no está
+document.getElementById("form-aviso").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const nombre = document.getElementById("aviso-nombre").value.trim();
+  const buscado = filtro.texto ? `“${filtro.texto}”` : "un disco que no vi en el catálogo";
+  const mensaje = `Hola${nombre ? `, soy ${nombre}` : ""}. Busco ${buscado}. ¿Me avisan cuando lo tengan?`;
+  window.open(linkWhatsApp(mensaje), "_blank", "noopener");
+});
 
 document.getElementById("buscar").addEventListener("input", (e) => {
   filtro.texto = e.target.value.trim();
@@ -289,6 +402,7 @@ async function cargarDiscos() {
 
 async function iniciar() {
   pintarDatosTienda();
+  pintarFormasPago();
   const contador = document.getElementById("contador");
   contador.textContent = "Cargando discos…";
   try {
@@ -298,7 +412,9 @@ async function iniciar() {
     return;
   }
   llenarGeneros();
+  recuperarPedido();
   pintarCatalogo();
+  pintarBarraPedido();
 }
 
 iniciar();

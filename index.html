@@ -53,16 +53,21 @@
     <!-- ===== CATÁLOGO ===== -->
     <section id="catalogo" class="catalogo" aria-live="polite"></section>
 
+    <!-- Si no está el disco: el cliente pide que le avisen cuando llegue -->
     <div id="vacio" class="vacio" hidden>
-      <p>No encontramos ese disco en el catálogo.</p>
-      <a id="btn-pedido" class="btn btn--wa" target="_blank" rel="noopener">Pregúntanos por WhatsApp, quizá lo tenemos</a>
+      <h3 id="vacio-titulo">No lo tenemos ahora</h3>
+      <p id="vacio-texto">Déjanos tu nombre y te avisamos por WhatsApp apenas llegue.</p>
+      <form id="form-aviso" class="aviso">
+        <input id="aviso-nombre" placeholder="Tu nombre" autocomplete="given-name">
+        <button type="submit" class="btn btn--wa">Avísame cuando llegue</button>
+      </form>
     </div>
 
     <!-- ===== CÓMO COMPRAR ===== -->
     <section class="como" aria-labelledby="como-titulo">
       <h2 id="como-titulo">¿Cómo comprar?</h2>
       <ol class="pasos">
-        <li><span>1</span><strong>Elige tu disco</strong><p>Toca “Lo quiero” y se abre WhatsApp con el mensaje listo.</p></li>
+        <li><span>1</span><strong>Arma tu pedido</strong><p>Toca “Agregar al pedido” en los discos que quieras y envíalo por WhatsApp con el mensaje listo.</p></li>
         <li><span>2</span><strong>Coordinamos</strong><p>Te confirmamos disponibilidad y acordamos el punto de entrega.</p></li>
         <li><span>3</span><strong>Recíbelo y paga</strong><p id="pagos-texto"></p></li>
       </ol>
@@ -83,6 +88,28 @@
     <p id="pie-nombre"></p>
     <p id="redes" class="redes"></p>
   </footer>
+
+  <!-- ===== MI PEDIDO ===== -->
+  <!-- Barra fija que aparece cuando hay discos en el pedido -->
+  <div id="barra-pedido" class="barra-pedido" hidden>
+    <span><b id="pedido-cuenta"></b><small id="pedido-total"></small></span>
+    <button type="button" id="btn-ver-pedido" class="btn btn--wa">Ver mi pedido</button>
+  </div>
+
+  <!-- Resumen antes de enviarlo por WhatsApp -->
+  <dialog id="resumen" class="resumen" aria-labelledby="resumen-titulo">
+    <div class="resumen__cabeza">
+      <h2 id="resumen-titulo">Tu pedido</h2>
+      <button type="button" id="resumen-cerrar" class="resumen__cerrar" aria-label="Cerrar">×</button>
+    </div>
+    <ul id="lineas" class="lineas"></ul>
+    <div class="total"><span id="total-nota">Total</span><b id="total-monto"></b></div>
+    <fieldset id="formas" class="formas">
+      <legend>¿Cómo quieres pagar?</legend>
+    </fieldset>
+    <p class="aviso-pago">Primero te confirmamos por WhatsApp que los discos estén disponibles. Recién ahí pagas, así nunca pagas por uno que ya se vendió.</p>
+    <a id="btn-enviar" class="btn btn--wa resumen__enviar" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
+  </dialog>
 
   <!-- Orden importante: primero configuración y datos, luego la lógica -->
   <script src="config.js"></script>
