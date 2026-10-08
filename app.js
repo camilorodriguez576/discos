@@ -122,11 +122,21 @@ function etiquetasEstado(d) {
     </div>`;
 }
 
+// Con muchos discos se muestran de a poco: así la página abre rápido en cualquier celular
+const POR_TANDA = 48;
+let mostrados = POR_TANDA;
+
 function pintarCatalogo() {
   const lista = discosFiltrados();
-  document.getElementById("catalogo").innerHTML = lista.map(tarjeta).join("");
-  document.getElementById("contador").textContent =
-    `Mostrando ${lista.length} de ${disponibles.length} discos`;
+  const visibles = lista.slice(0, mostrados);
+  document.getElementById("catalogo").innerHTML = visibles.map(tarjeta).join("");
+  document.getElementById("contador").textContent = lista.length > visibles.length
+    ? `Mostrando ${visibles.length} de ${lista.length} discos`
+    : `${lista.length} disco${lista.length === 1 ? "" : "s"}${lista.length < disponibles.length ? ` de ${disponibles.length}` : ""}`;
+  const faltan = lista.length - visibles.length;
+  const verMas = document.getElementById("ver-mas");
+  verMas.hidden = faltan <= 0;
+  verMas.textContent = `Ver ${Math.min(faltan, POR_TANDA)} discos más`;
 
   const vacio = document.getElementById("vacio");
   vacio.hidden = lista.length > 0;
@@ -668,6 +678,14 @@ document.addEventListener("click", (e) => {
   document.querySelector(`.disco .btn--agregar[data-clave="${CSS.escape(boton.dataset.clave)}"]`)?.focus();
 });
 
+// "Ver más": la siguiente tanda, sin perder el lugar donde estaba
+document.getElementById("ver-mas").addEventListener("click", () => {
+  const antes = document.querySelectorAll("#catalogo .disco").length;
+  mostrados += POR_TANDA;
+  pintarCatalogo();
+  document.querySelectorAll("#catalogo .disco")[antes]?.querySelector(".disco__abrir")?.focus({ preventScroll: true });
+});
+
 // Encabezado de historias
 $("hist-ver").addEventListener("click", () => abrirFicha(claveDisco(carrusel.lista[carrusel.i])));
 $("hist-arte").addEventListener("click", () => abrirFicha(claveDisco(carrusel.lista[carrusel.i])));
@@ -737,6 +755,7 @@ document.getElementById("form-aviso").addEventListener("submit", (e) => {
 
 document.getElementById("buscar").addEventListener("input", (e) => {
   filtro.texto = e.target.value.trim();
+  mostrados = POR_TANDA;
   pintarCatalogo();
 });
 
@@ -745,17 +764,20 @@ document.querySelectorAll(".chip").forEach((chip) =>
     document.querySelectorAll(".chip").forEach((c) => c.classList.remove("is-active"));
     chip.classList.add("is-active");
     filtro.estado = chip.dataset.estado;
+    mostrados = POR_TANDA;
     pintarCatalogo();
   })
 );
 
 document.getElementById("genero").addEventListener("change", (e) => {
   filtro.genero = e.target.value;
+  mostrados = POR_TANDA;
   pintarCatalogo();
 });
 
 document.getElementById("orden").addEventListener("change", (e) => {
   filtro.orden = e.target.value;
+  mostrados = POR_TANDA;
   pintarCatalogo();
 });
 

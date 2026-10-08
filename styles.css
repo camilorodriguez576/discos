@@ -960,3 +960,7 @@ body::before {
 .historias__arte.cargada .historias__cd { opacity: 1; }
 .historias__arte img { opacity: 0; transition: opacity .4s; }
 .historias__arte.cargada img { opacity: 1; }
+
+/* ---------- "Ver más": el catálogo se muestra de a 48 ---------- */
+.ver-mas { display: flex; justify-content: center; padding-bottom: 40px; }
+.ver-mas .btn { min-width: 240px; background: var(--superficie); box-shadow: var(--sombra-dura); border: 2px solid var(--tinta); }

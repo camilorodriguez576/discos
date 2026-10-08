@@ -49,7 +49,9 @@ function onOpen() {
 function onEdit(e) {
   const rango = e.range;
   const hoja = rango.getSheet();
-  if (hoja.getName() !== HOJA || rango.getLastRow() < 2) return;
+  if (hoja.getName() !== HOJA) return;
+  borrarCache(); // cualquier cambio en la hoja se ve en la tienda en la próxima visita
+  if (rango.getLastRow() < 2) return;
   if (rango.getColumn() > col("vendido") || rango.getLastColumn() < col("vendido")) return;
   for (let fila = Math.max(2, rango.getRow()); fila <= rango.getLastRow(); fila++) {
     const vendido = hoja.getRange(fila, col("vendido")).getValue() === true;
@@ -99,6 +101,7 @@ function prepararHoja() {
   }
 
   darFormato(hoja);
+  borrarCache();
   if (!PropertiesService.getScriptProperties().getProperty("CLAVE")) cambiarClave();
   SpreadsheetApp.getUi().alert(`¡Hoja lista! ${filas.length} disco(s) en la lista.`);
 }
@@ -174,6 +177,7 @@ function cambiarVendido(vendido) {
     hoja.getRange(fila, col("fecha_venta")).setValue(vendido ? new Date() : "");
     cambiados++;
   }
+  borrarCache();
   SpreadsheetApp.getActive().toast(`${cambiados} disco(s) ${vendido ? "marcados como vendidos" : "de vuelta en venta"}.`);
 }
 
@@ -181,7 +185,7 @@ function cambiarVendido(vendido) {
 
 function doGet(e) {
   const todos = e && e.parameter && e.parameter.todos === "1";
-  const json = JSON.stringify({ discos: leerDiscos(todos) });
+  const json = todos ? JSON.stringify({ discos: leerDiscos(true) }) : listaPublica();
   const callback = e && e.parameter && e.parameter.callback;
   // JSONP: permite leer los discos incluso abriendo la página como archivo
   if (callback && /^[\w$]+$/.test(callback)) {
@@ -205,6 +209,35 @@ function leerDiscos(incluirVendidos) {
       if (alta) d.fecha_alta = alta.toISOString().slice(0, 10);
       return d;
     });
+}
+
+// ---------- Caché: la lista ya preparada, para que la tienda abra rápido ----------
+// Con muchos discos, leer la hoja entera en cada visita es lento. La lista se guarda
+// lista para entregar y se borra sola cuando algo cambia (o a los 10 minutos, por si acaso).
+// Google guarda máximo 100 KB por pieza, así que se parte en pedazos.
+
+const CACHE_CLAVE = "discos-publicos";
+const CACHE_SEGUNDOS = 600;
+const PEDAZO = 90000;
+
+function listaPublica() {
+  const cache = CacheService.getScriptCache();
+  const n = Number(cache.get(CACHE_CLAVE + ":n"));
+  if (n > 0) {
+    const claves = Array.from({ length: n }, (_, i) => `${CACHE_CLAVE}:${i}`);
+    const pedazos = cache.getAll(claves);
+    if (claves.every((k) => k in pedazos)) return claves.map((k) => pedazos[k]).join("");
+  }
+  const json = JSON.stringify({ discos: leerDiscos(false) });
+  const guardar = {};
+  for (let i = 0; i * PEDAZO < json.length; i++) guardar[`${CACHE_CLAVE}:${i}`] = json.slice(i * PEDAZO, (i + 1) * PEDAZO);
+  guardar[CACHE_CLAVE + ":n"] = String(Object.keys(guardar).length);
+  try { cache.putAll(guardar, CACHE_SEGUNDOS); } catch (err) { /* si no entra en la caché, igual se entrega */ }
+  return json;
+}
+
+function borrarCache() {
+  try { CacheService.getScriptCache().remove(CACHE_CLAVE + ":n"); } catch (err) { /* nada que borrar */ }
 }
 
 // ---------- Escritura: el escáner envía un disco nuevo ----------
@@ -247,6 +280,7 @@ function agregar(disco) {
 
     const fila = hoja.getLastRow();
     hoja.getRange(fila, col("vendido")).insertCheckboxes().setValue(false);
+    borrarCache();
     return id;
   } finally {
     lock.releaseLock();
