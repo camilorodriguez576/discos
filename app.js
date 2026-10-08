@@ -387,11 +387,26 @@ async function abrirFicha(c) {
   const ficha = $("ficha");
   ficha.style.setProperty("--h", tono(d.artista + d.album));
 
-  // Estuche: vuelve a su posición, con el disco guardado
-  Object.assign(giro, { rx: -8, ry: -24 });
+  // Estuche: entra girando y luego el disco sale solo
+  const estuche = $("estuche");
+  estuche.classList.add("arrastrando"); // sin transición, para ponerlo de costado al instante
+  Object.assign(giro, { rx: 12, ry: -110 });
   ponerGiro();
   $("cd3d").classList.remove("fuera");
   $("btn-sacar").textContent = "Sacar el disco";
+  clearTimeout(abrirFicha.salida);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    estuche.classList.remove("arrastrando");
+    Object.assign(giro, { rx: -8, ry: -24 });
+    ponerGiro();
+  }));
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    abrirFicha.salida = setTimeout(() => {
+      if (fichaActual !== d) return;
+      $("cd3d").classList.add("fuera");
+      $("btn-sacar").textContent = "Guardar el disco";
+    }, 750);
+  }
 
   const tapa = $("tapa-frente");
   tapa.textContent = d.album;
@@ -476,6 +491,33 @@ $("ficha-agregar").addEventListener("click", () => {
   pintarBotonFicha();
   pintarCatalogo();
 });
+
+// ---------- Portadas que se inclinan con el mouse ----------
+// Solo en computadora (con mouse); en el celular el CD ya asoma de costado.
+if (matchMedia("(hover: hover) and (pointer: fine)").matches &&
+    !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const catalogo = $("catalogo");
+  catalogo.addEventListener("pointermove", (e) => {
+    const caja = e.target.closest(".disco__abrir");
+    if (!caja) return;
+    const portada = caja.querySelector(".portada");
+    const r = portada.getBoundingClientRect();
+    const x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    const y = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+    caja.classList.add("inclinando");
+    portada.style.setProperty("--tx", `${(x - 0.5) * 18}deg`);
+    portada.style.setProperty("--ty", `${(0.5 - y) * 14}deg`);
+    portada.style.setProperty("--bx", `${x * 100}%`);
+    portada.style.setProperty("--by", `${y * 100}%`);
+  });
+  catalogo.addEventListener("pointerout", (e) => {
+    const caja = e.target.closest(".disco__abrir");
+    if (!caja || caja.contains(e.relatedTarget)) return;
+    caja.classList.remove("inclinando");
+    const portada = caja.querySelector(".portada");
+    ["--tx", "--ty", "--bx", "--by"].forEach((v) => portada.style.removeProperty(v));
+  });
+}
 
 // ---------- Eventos ----------
 
