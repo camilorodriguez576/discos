@@ -95,7 +95,18 @@ async function encenderCamara() {
     verbose: false,
   });
   try {
-    await lector.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 260, height: 120 } }, alLeerCodigo);
+    await lector.start({ facingMode: "environment" }, {
+      fps: 15,
+      // Recuadro ancho y bajo, con la forma de un código de barras, que ocupa casi todo el ancho
+      qrbox: (ancho, alto) => ({ width: Math.floor(ancho * 0.88), height: Math.floor(Math.min(alto * 0.5, ancho * 0.45)) }),
+      // Alta resolución y enfoque continuo: las barras de un CD son finas
+      videoConstraints: {
+        facingMode: "environment",
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        advanced: [{ focusMode: "continuous" }],
+      },
+    }, alLeerCodigo);
     camaraEncendida = true;
     $("btn-camara").textContent = "Apagar cámara";
     mensaje("Apunta al código de barras del CD.");
@@ -131,6 +142,30 @@ $("form-codigo").addEventListener("submit", (e) => {
   if (codigo.length < 8) return mensaje("El código de barras tiene entre 8 y 13 números.");
   $("codigo").value = "";
   buscarCodigo(codigo);
+});
+
+// Leer el código desde una foto: más confiable que el video en algunos celulares
+let lectorFoto = null;
+$("foto-codigo").addEventListener("change", async (e) => {
+  const archivo = e.target.files && e.target.files[0];
+  e.target.value = ""; // permite elegir la misma foto otra vez
+  if (!archivo || ocupado) return;
+  if (!window.Html5Qrcode) return mensaje("No se pudo cargar el lector. Revisa tu internet y recarga la página.");
+  const F = Html5QrcodeSupportedFormats;
+  lectorFoto ??= new Html5Qrcode("lector-foto", {
+    formatsToSupport: [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E],
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+    verbose: false,
+  });
+  mensaje("Leyendo la foto…");
+  try {
+    const codigo = await lectorFoto.scanFile(archivo, false);
+    navigator.vibrate?.(80);
+    try { if (camaraEncendida) lector.pause(true); } catch { /* sigue */ }
+    buscarCodigo(codigo.replace(/\D/g, ""));
+  } catch {
+    mensaje("No se pudo leer el código en la foto. Prueba más cerca, con buena luz y sin reflejos, o escribe el número.");
+  }
 });
 
 $("btn-manual").addEventListener("click", () => {

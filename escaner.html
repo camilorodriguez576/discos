@@ -46,6 +46,10 @@
         <input id="codigo" inputmode="numeric" placeholder="O escribe el código de barras" autocomplete="off">
         <button class="btn btn--sec">Buscar</button>
       </form>
+      <label class="btn btn--sec btn--ancho" for="foto-codigo">¿La cámara no lo toma? Tomar foto del código</label>
+      <input id="foto-codigo" type="file" accept="image/*" capture="environment" hidden>
+      <div id="lector-foto" hidden></div>
+      <p class="msg">Acerca el celular hasta que el código ocupe casi todo el recuadro, con buena luz y sin reflejos.</p>
       <button id="btn-manual" class="enlace" type="button">¿El disco no tiene código? Escríbelo a mano</button>
       <p id="estado-busqueda" class="msg" aria-live="polite"></p>
     </section>
