@@ -11,7 +11,7 @@ const CONFIG = {
 
   // Número de WhatsApp con código de país (51 = Perú), sin espacios ni "+"
   // Ejemplo: si el número es 987 654 321  ->  "51987654321"
-  whatsapp: "51999999999",
+  whatsapp: "51981094263",
 
   // Puntos de entrega en Lima (se coordinan en cada pedido)
   puntosEntrega: [
