@@ -38,6 +38,17 @@
       <p id="config-msg" class="msg msg--error"></p>
     </section>
 
+    <!-- Discos que llegan desde "Fotos de discos" -->
+    <section id="importar" class="tarjeta tarjeta--importar" hidden>
+      <h2 id="importar-titulo">Discos desde tus fotos</h2>
+      <p class="msg">Revisa la lista y toca Guardar. Se agregan a la hoja igual que los escaneados.</p>
+      <ul id="importar-lista" class="recientes"></ul>
+      <div class="fila fila--botones">
+        <button type="button" id="btn-descartar" class="btn btn--sec">Descartar</button>
+        <button type="button" id="btn-importar" class="btn btn--principal">Guardar</button>
+      </div>
+    </section>
+
     <!-- 1. Leer el código de barras -->
     <section class="tarjeta">
       <div id="lector" class="lector"></div>

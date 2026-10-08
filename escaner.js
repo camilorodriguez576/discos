@@ -445,9 +445,118 @@ function agregarReciente(d, prueba) {
   if (!prueba) $("conteo").textContent = `${++guardados} guardado${guardados === 1 ? "" : "s"}`;
 }
 
+// ---------- Importar discos desde "Fotos de discos" ----------
+// Esa página reconoce discos en una foto y abre este escáner con la lista en el "#importar=…".
+
+let porImportar = [];
+
+function decodificar(texto) {
+  const b64 = texto.replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64 + "===".slice((b64.length + 3) % 4));
+  const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+function revisarImportacion() {
+  const m = location.hash.match(/^#importar=([\w-]+)$/);
+  if (!m) return;
+  try {
+    const datos = decodificar(m[1]);
+    porImportar = (Array.isArray(datos) ? datos : [])
+      .map((d) => ({
+        artista: String(d.a || "").trim(),
+        album: String(d.al || "").trim(),
+        anio: String(d.y || "").replace(/\D/g, "").slice(0, 4),
+        genero: String(d.g || "").trim(),
+        estado: d.e === "Nuevo" ? "Nuevo" : "Usado",
+        precio: Number(d.p) > 0 ? Number(d.p) : "",
+        guardado: false,
+      }))
+      .filter((d) => d.artista && d.album)
+      .slice(0, 200);
+  } catch {
+    porImportar = [];
+    toast("El enlace con los discos está incompleto. Vuelve a tocar Guardar en Fotos de discos.", true);
+  }
+  pintarImportacion();
+  if (porImportar.length) $("importar").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function pintarImportacion() {
+  const pendientes = porImportar.filter((d) => !d.guardado);
+  $("importar").hidden = porImportar.length === 0;
+  $("importar-titulo").textContent = `${porImportar.length} disco${porImportar.length === 1 ? "" : "s"} desde tus fotos`;
+  $("importar-lista").replaceChildren(...porImportar.map((d) => {
+    const li = document.createElement("li");
+    const texto = document.createElement("div");
+    const titulo = document.createElement("strong");
+    titulo.textContent = d.album;
+    const sub = document.createElement("small");
+    sub.textContent = `${d.artista}${d.anio ? " · " + d.anio : ""} · ${d.estado} · ${d.precio ? "S/ " + d.precio : "Consultar"}`;
+    texto.append(titulo, sub);
+    const marca = document.createElement("span");
+    marca.className = "estado-import" + (d.guardado ? " estado-import--ok" : d.error ? " estado-import--error" : "");
+    marca.textContent = d.guardado ? "✓" : d.error ? "No se guardó" : "";
+    li.append(texto, marca);
+    return li;
+  }));
+  const boton = $("btn-importar");
+  boton.textContent = pendientes.length ? `Guardar ${pendientes.length} en la hoja` : "Listo";
+  boton.disabled = pendientes.length === 0;
+}
+
+$("btn-importar").addEventListener("click", async () => {
+  if (modoPrueba) return toast("Modo prueba: falta conectar la hoja de Google.", true);
+  if (!clave) {
+    $("config").hidden = false;
+    $("config").scrollIntoView({ behavior: "smooth" });
+    return toast("Primero conecta con la hoja", true);
+  }
+  const boton = $("btn-importar");
+  boton.disabled = true;
+  let ok = 0;
+  const pendientes = porImportar.filter((d) => !d.guardado);
+  for (const [i, d] of pendientes.entries()) {
+    boton.textContent = `Guardando ${i + 1} de ${pendientes.length}…`;
+    const disco = { codigo: "", artista: d.artista, album: d.album, anio: d.anio, genero: d.genero,
+      estado: d.estado, precio: d.precio, detalle: "", portada: "", novedad: false };
+    try {
+      const r = await enviar("agregar", { disco });
+      if (!r.ok) throw new Error(r.error);
+      d.guardado = true;
+      d.error = false;
+      ok++;
+      agregarReciente(disco, false);
+    } catch (err) {
+      d.error = true;
+      if (String(err.message).includes("Clave")) {
+        guardarLS(CLAVE_LS, "");
+        clave = "";
+        $("config").hidden = false;
+        pintarImportacion();
+        return toast("La clave no es correcta. Escríbela de nuevo y vuelve a tocar Guardar.", true);
+      }
+    }
+    pintarImportacion();
+  }
+  const fallaron = porImportar.filter((d) => !d.guardado).length;
+  toast(fallaron ? `Se guardaron ${ok}. ${fallaron} no se guardaron: toca Guardar para reintentar.` : `¡Listo! ${ok} disco${ok === 1 ? "" : "s"} guardado${ok === 1 ? "" : "s"} en la hoja.`, fallaron > 0);
+  if (!fallaron) history.replaceState(null, "", location.pathname); // quita la lista del enlace
+  pintarImportacion();
+});
+
+$("btn-descartar").addEventListener("click", () => {
+  porImportar = [];
+  history.replaceState(null, "", location.pathname);
+  pintarImportacion();
+});
+
+window.addEventListener("hashchange", revisarImportacion);
+
 // ---------- Inicio ----------
 
 llenarPrecios();
 if (modoPrueba) $("aviso-demo").hidden = false;
 else if (!clave) $("config").hidden = false;
 else cargarExistentes();
+revisarImportacion();

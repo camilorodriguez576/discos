@@ -157,6 +157,12 @@
 }
 .recientes small { display: block; color: var(--tinta-suave); }
 
+/* ---------- Importar desde fotos ---------- */
+.tarjeta--importar { border: 2px solid var(--acento); }
+.recientes .estado-import { margin-left: auto; font-weight: 700; flex: 0 0 auto; }
+.estado-import--ok { color: #1f9d55; }
+.estado-import--error { color: var(--acento); }
+
 /* ---------- Aviso flotante ---------- */
 .toast {
   position: fixed;
