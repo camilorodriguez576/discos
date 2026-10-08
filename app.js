@@ -103,12 +103,15 @@ function tarjeta(d) {
       <div class="disco__info">
         <h3 class="disco__album" data-ficha="${c}">${escapar(d.album)}</h3>
         <p class="disco__artista">${escapar(d.artista)}</p>
+        <p class="disco__stock${d.stock > 1 ? "" : " disco__stock--uno"}">${textoStock(d)}</p>
         <p class="disco__meta mono"><span class="disco__num">Nº ${String(d.num).padStart(3, "0")}</span> · ${[d.anio, d.genero].filter(Boolean).map(escapar).join(" · ")}</p>
       </div>
       <button type="button" class="btn btn--agregar" data-clave="${c}"
               aria-pressed="${enPedido}">${enPedido ? "✓ En tu pedido" : "Agregar al pedido"}</button>
     </article>`;
 }
+
+const textoStock = (d) => (d.stock > 1 ? `${d.stock} disponibles` : "Último disponible");
 
 function etiquetasEstado(d) {
   return `<div class="etiquetas">
@@ -281,28 +284,35 @@ const observador = new IntersectionObserver((entradas) => {
 // El cliente junta varios discos y los manda en un solo mensaje de WhatsApp.
 // Se guarda en el navegador para que no se pierda si recarga la página.
 
-const CLAVE_PEDIDO = "pedido-v1";
-const claveDisco = (d) => `${d.artista}|${d.album}|${d.estado}`;
-const pedido = new Map(); // clave -> disco
+const CLAVE_PEDIDO = "pedido-v2";
+// Copias iguales (mismo disco, estado, precio y comentario) son un mismo producto con stock
+const claveDisco = (d) => [d.artista, d.album, d.estado, d.precio || "", d.detalle || ""].join("|");
+const pedido = new Map(); // clave -> { disco, cant }
 
 function guardarPedido() {
-  try { localStorage.setItem(CLAVE_PEDIDO, JSON.stringify([...pedido.keys()])); } catch { /* sin almacenamiento */ }
+  const datos = [...pedido.entries()].map(([c, { cant }]) => [c, cant]);
+  try { localStorage.setItem(CLAVE_PEDIDO, JSON.stringify(datos)); } catch { /* sin almacenamiento */ }
 }
 
-// Al cargar, recupera el pedido guardado (sin los discos que ya se vendieron)
+// Al cargar, recupera el pedido guardado (sin lo que ya se vendió, y sin pasar del stock)
 function recuperarPedido() {
-  let claves = [];
-  try { claves = JSON.parse(localStorage.getItem(CLAVE_PEDIDO)) || []; } catch { /* sin almacenamiento */ }
+  let guardado = [];
+  try { guardado = JSON.parse(localStorage.getItem(CLAVE_PEDIDO)) || []; } catch { /* sin almacenamiento */ }
   const porClave = new Map(disponibles.map((d) => [claveDisco(d), d]));
-  claves.forEach((c) => porClave.has(c) && pedido.set(c, porClave.get(c)));
+  guardado.forEach(([c, cant]) => {
+    const d = porClave.get(c);
+    if (d) pedido.set(c, { disco: d, cant: Math.min(cant, d.stock) });
+  });
 }
 
-const totalPedido = () => [...pedido.values()].filter(tienePrecio).reduce((s, d) => s + d.precio, 0);
-const aConsultar = () => [...pedido.values()].filter((d) => !tienePrecio(d)).length;
+const lineasPedido = () => [...pedido.values()];
+const unidades = () => lineasPedido().reduce((s, l) => s + l.cant, 0);
+const totalPedido = () => lineasPedido().filter((l) => tienePrecio(l.disco)).reduce((s, l) => s + l.disco.precio * l.cant, 0);
+const aConsultar = () => lineasPedido().filter((l) => !tienePrecio(l.disco)).reduce((s, l) => s + l.cant, 0);
 const formaElegida = () => document.querySelector('input[name="forma"]:checked')?.value || "";
 
 function pintarBarraPedido() {
-  const n = pedido.size;
+  const n = unidades();
   document.getElementById("barra-pedido").hidden = n === 0;
   document.body.classList.toggle("con-pedido", n > 0);
   if (!n) return;
@@ -313,8 +323,9 @@ function pintarBarraPedido() {
 }
 
 function mensajePedido() {
-  const lineas = [...pedido.values()].map((d) =>
-    `• ${d.album} – ${d.artista} (${d.estado}) ${tienePrecio(d) ? formatoPrecio(d.precio) : "precio a consultar"}`);
+  const lineas = lineasPedido().map(({ disco: d, cant }) =>
+    `• ${d.album} – ${d.artista} (${d.estado})${cant > 1 ? ` x${cant}` : ""} ` +
+    (tienePrecio(d) ? formatoPrecio(d.precio * cant) : "precio a consultar"));
   return `Hola, quiero pedir estos CDs:\n${lineas.join("\n")}\n\n` +
     `Total: ${formatoPrecio(totalPedido())}${aConsultar() ? " + los de precio a consultar" : ""}\n` +
     `Pago: ${formaElegida()}\n¿Están disponibles?`;
@@ -322,10 +333,17 @@ function mensajePedido() {
 
 function pintarResumen() {
   if (!pedido.size) return document.getElementById("resumen").close();
-  document.getElementById("lineas").innerHTML = [...pedido.entries()].map(([c, d]) => `
+  document.getElementById("lineas").innerHTML = [...pedido.entries()].map(([c, { disco: d, cant }]) => `
     <li>
-      <span><b>${escapar(d.album)}</b><small>${escapar(d.artista)} · ${escapar(d.estado)}</small></span>
-      <span class="monto">${textoPrecio(d)}</span>
+      <span><b>${escapar(d.album)}</b><small>${escapar(d.artista)} · ${escapar(d.estado)}</small>
+        ${d.stock > 1 ? `<span class="cantidad">
+          <button type="button" class="menos" data-clave="${escapar(c)}" aria-label="Uno menos" ${cant <= 1 ? "disabled" : ""}>−</button>
+          <output aria-live="polite">${cant}</output>
+          <button type="button" class="mas" data-clave="${escapar(c)}" aria-label="Uno más" ${cant >= d.stock ? "disabled" : ""}>+</button>
+          <small>de ${d.stock}</small>
+        </span>` : ""}
+      </span>
+      <span class="monto">${tienePrecio(d) ? formatoPrecio(d.precio * cant) : "Consultar"}</span>
       <button type="button" class="quitar" data-clave="${escapar(c)}" aria-label="Quitar ${escapar(d.album)}">×</button>
     </li>`).join("");
   document.getElementById("total-monto").textContent = formatoPrecio(totalPedido());
@@ -340,7 +358,7 @@ function pintarFormasPago() {
 
 function alternarEnPedido(c) {
   if (pedido.has(c)) pedido.delete(c);
-  else pedido.set(c, disponibles.find((d) => claveDisco(d) === c));
+  else pedido.set(c, { disco: disponibles.find((d) => claveDisco(d) === c), cant: 1 });
   guardarPedido();
   pintarBarraPedido();
 }
@@ -422,7 +440,7 @@ async function abrirFicha(c) {
   $("ficha-etiquetas").innerHTML = etiquetasEstado(d).replace(/<\/?div[^>]*>/g, "");
   $("ficha-album").textContent = d.album;
   $("ficha-artista").textContent = d.artista;
-  $("ficha-datos").innerHTML = [["Año", d.anio], ["Género", d.genero], ["Estado", d.estado], ["Código", d.codigo]]
+  $("ficha-datos").innerHTML = [["Disponibles", d.stock], ["Año", d.anio], ["Género", d.genero], ["Estado", d.estado], ["Código", d.codigo]]
     .filter(([, v]) => v)
     .map(([k, v]) => `<div><dt>${k}</dt><dd>${escapar(v)}</dd></div>`).join("");
   $("ficha-detalle").textContent = d.detalle || "";
@@ -541,10 +559,21 @@ document.getElementById("resumen-cerrar").addEventListener("click", () => docume
 
 document.getElementById("lineas").addEventListener("click", (e) => {
   const quitar = e.target.closest(".quitar");
-  if (!quitar) return;
-  alternarEnPedido(quitar.dataset.clave);
+  if (quitar) {
+    alternarEnPedido(quitar.dataset.clave);
+    pintarResumen();
+    pintarCatalogo();
+    return;
+  }
+  // − / + : cuántas copias lleva, entre 1 y el stock
+  const boton = e.target.closest(".menos, .mas");
+  if (!boton) return;
+  const linea = pedido.get(boton.dataset.clave);
+  linea.cant = Math.max(1, Math.min(linea.disco.stock, linea.cant + (boton.classList.contains("mas") ? 1 : -1)));
+  guardarPedido();
+  pintarBarraPedido();
   pintarResumen();
-  pintarCatalogo();
+  document.querySelector(`#lineas [data-clave="${CSS.escape(boton.dataset.clave)}"].${boton.classList.contains("mas") ? "mas" : "menos"}`)?.focus();
 });
 
 document.getElementById("formas").addEventListener("change", () => {
@@ -611,13 +640,30 @@ async function cargarDiscos() {
   }));
 }
 
+// Junta las copias iguales en un solo disco con su stock ("5 disponibles")
+function agruparCopias(lista) {
+  const grupos = new Map();
+  lista.forEach((d) => {
+    const c = claveDisco(d);
+    const g = grupos.get(c);
+    if (g) {
+      g.stock++;
+      g.novedad = g.novedad || d.novedad;
+      g.portada = g.portada || d.portada;
+    } else {
+      grupos.set(c, { ...d, stock: 1 });
+    }
+  });
+  return [...grupos.values()];
+}
+
 async function iniciar() {
   pintarDatosTienda();
   pintarFormasPago();
   const contador = document.getElementById("contador");
   contador.textContent = "Cargando discos…";
   try {
-    disponibles = await cargarDiscos();
+    disponibles = agruparCopias(await cargarDiscos());
   } catch {
     contador.textContent = "No pudimos cargar el catálogo. Revisa tu conexión o escríbenos por WhatsApp.";
     return;

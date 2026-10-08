@@ -737,3 +737,16 @@ body::before {
     linear-gradient(transparent 0 58%, var(--sticker) 58% 66%, var(--naranja) 66% 74%, var(--rosa) 74% 82%, transparent 82%),
     var(--cobalto);
 }
+
+/* ---------- Stock: copias iguales en una sola tarjeta ---------- */
+.disco__stock { margin-top: 2px; font-size: .85rem; font-weight: 600; color: var(--nuevo); }
+.disco__stock--uno { color: var(--usado); }
+.cantidad { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; }
+.cantidad button {
+  width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--tinta);
+  background: var(--superficie); color: var(--tinta); font: 700 1.1rem var(--f-texto); cursor: pointer;
+}
+.cantidad button:disabled { opacity: .35; cursor: default; }
+.cantidad output { min-width: 1.5ch; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cantidad small { color: var(--tinta-2); }
+@media (pointer: coarse), (max-width: 760px) { .cantidad button { width: 44px; height: 44px; } }
