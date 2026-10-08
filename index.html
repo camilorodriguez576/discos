@@ -2,34 +2,43 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Discos de Papá · CDs en Lima</title>
-  <meta name="description" content="CDs nuevos y usados de rock y pop en Lima. Pide por WhatsApp, entrega en punto acordado. Yape, Plin, efectivo o transferencia.">
+  <meta name="description" content="CDs nuevos y usados de rock y pop en Lima. Arma tu pedido y lo coordinamos por WhatsApp. Yape, Plin, efectivo o transferencia.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <!-- ===== CABECERA ===== -->
-  <header class="hero">
-    <div class="hero__inner">
-      <div class="hero__text">
-        <h1 id="nombre-tienda">Discos de Papá</h1>
-        <p id="lema" class="hero__lema"></p>
-        <a id="btn-whatsapp-hero" class="btn btn--wa" target="_blank" rel="noopener">
-          Escríbenos por WhatsApp
-        </a>
-      </div>
-      <div class="cd" aria-hidden="true"></div>
-    </div>
+  <!-- ===== BARRA SUPERIOR ===== -->
+  <header class="barra">
+    <a class="marca" href="./">
+      <span class="marca__cd" aria-hidden="true"></span>
+      <span id="nombre-tienda">Discos de Papá</span>
+    </a>
+    <a id="btn-whatsapp-hero" class="btn btn--wa btn--chico" target="_blank" rel="noopener">WhatsApp</a>
   </header>
+
+  <!-- ===== PORTADA ===== -->
+  <section class="intro">
+    <div class="intro__texto">
+      <p class="mono intro__eyebrow">CDs nuevos y usados · Lima</p>
+      <h1>Rock y pop en disco, <em>listos para sonar.</em></h1>
+      <p id="lema" class="intro__lema"></p>
+    </div>
+    <!-- Estuche abierto con el CD saliendo: solo decoración -->
+    <div class="intro__arte" aria-hidden="true">
+      <div class="arte__estuche"></div>
+      <div class="arte__cd"></div>
+    </div>
+  </section>
 
   <main>
     <!-- ===== BUSCADOR Y FILTROS ===== -->
     <section class="filtros" aria-label="Buscar y filtrar">
-      <input id="buscar" type="search" placeholder="Busca artista o álbum…" autocomplete="off">
+      <input id="buscar" type="search" placeholder="Busca artista o álbum…" autocomplete="off" aria-label="Buscar disco">
       <div class="filtros__fila">
         <div class="chips" role="group" aria-label="Estado">
           <button class="chip is-active" data-estado="">Todos</button>
@@ -37,18 +46,18 @@
           <button class="chip" data-estado="Usado">Usados</button>
         </div>
         <select id="genero" aria-label="Género">
-          <option value="">Todos los géneros</option>
+          <option value="">Género</option>
         </select>
         <select id="orden" aria-label="Ordenar">
-          <option value="novedad">Novedades primero</option>
-          <option value="precio-asc">Precio: menor a mayor</option>
-          <option value="precio-desc">Precio: mayor a menor</option>
+          <option value="novedad">Novedades</option>
+          <option value="precio-asc">Precio ↑</option>
+          <option value="precio-desc">Precio ↓</option>
           <option value="artista">Artista A–Z</option>
-          <option value="anio">Año (más antiguos)</option>
+          <option value="anio">Más antiguos</option>
         </select>
       </div>
-      <p id="contador" class="contador"></p>
     </section>
+    <p id="contador" class="contador mono"></p>
 
     <!-- ===== CATÁLOGO ===== -->
     <section id="catalogo" class="catalogo" aria-live="polite"></section>
@@ -58,7 +67,7 @@
       <h3 id="vacio-titulo">No lo tenemos ahora</h3>
       <p id="vacio-texto">Déjanos tu nombre y te avisamos por WhatsApp apenas llegue.</p>
       <form id="form-aviso" class="aviso">
-        <input id="aviso-nombre" placeholder="Tu nombre" autocomplete="given-name">
+        <input id="aviso-nombre" placeholder="Tu nombre" autocomplete="given-name" aria-label="Tu nombre">
         <button type="submit" class="btn btn--wa">Avísame cuando llegue</button>
       </form>
     </div>
@@ -67,13 +76,13 @@
     <section class="como" aria-labelledby="como-titulo">
       <h2 id="como-titulo">¿Cómo comprar?</h2>
       <ol class="pasos">
-        <li><span>1</span><strong>Arma tu pedido</strong><p>Toca “Agregar al pedido” en los discos que quieras y envíalo por WhatsApp con el mensaje listo.</p></li>
-        <li><span>2</span><strong>Coordinamos</strong><p>Te confirmamos disponibilidad y acordamos el punto de entrega.</p></li>
-        <li><span>3</span><strong>Recíbelo y paga</strong><p id="pagos-texto"></p></li>
+        <li><span class="mono">01</span><strong>Arma tu pedido</strong><p>Toca “Agregar al pedido” en los discos que quieras y envíalo por WhatsApp con el mensaje listo.</p></li>
+        <li><span class="mono">02</span><strong>Coordinamos</strong><p>Te confirmamos que estén disponibles y acordamos el punto de entrega.</p></li>
+        <li><span class="mono">03</span><strong>Recíbelo y paga</strong><p id="pagos-texto"></p></li>
       </ol>
       <div class="info">
         <div>
-          <h3>Puntos de entrega en Lima</h3>
+          <h3>Entregas en Lima</h3>
           <ul id="puntos"></ul>
         </div>
         <div>
@@ -88,6 +97,53 @@
     <p id="pie-nombre"></p>
     <p id="redes" class="redes"></p>
   </footer>
+
+  <!-- ===== FICHA DEL DISCO (con el estuche en 3D) ===== -->
+  <dialog id="ficha" class="ficha" aria-labelledby="ficha-album">
+    <button type="button" id="ficha-cerrar" class="ficha__cerrar" aria-label="Cerrar">×</button>
+    <div class="ficha__escena">
+      <div id="escena" class="escena">
+        <div id="estuche" class="estuche">
+          <div class="cara cara--frente"><div class="tapa" id="tapa-frente"></div><span class="bisagra"></span></div>
+          <div class="cara cara--atras">
+            <div class="contra">
+              <b id="contra-titulo"></b>
+              <ol id="contra-canciones"></ol>
+              <div class="contra__barras"><span class="barras"></span><span id="contra-codigo" class="mono"></span></div>
+            </div>
+          </div>
+          <div class="cara cara--lomo-izq"><span id="lomo-texto"></span></div>
+          <div class="cara cara--lomo-der"></div>
+          <div class="cara cara--arriba"></div>
+          <div class="cara cara--abajo"></div>
+          <div id="cd3d" class="cd3d"><div class="cd3d__disco"><div class="cd3d__etiqueta" id="cd-etiqueta"></div></div></div>
+        </div>
+      </div>
+      <div class="ficha__controles">
+        <button type="button" id="btn-girar" class="btn btn--linea btn--chico">Ver contraportada</button>
+        <button type="button" id="btn-sacar" class="btn btn--linea btn--chico">Sacar el disco</button>
+      </div>
+      <p class="ficha__pista mono">Arrastra para girar la caja</p>
+    </div>
+
+    <div class="ficha__info">
+      <div class="ficha__etiquetas" id="ficha-etiquetas"></div>
+      <h2 id="ficha-album"></h2>
+      <p id="ficha-artista" class="ficha__artista"></p>
+      <dl id="ficha-datos" class="ficha__datos"></dl>
+      <p id="ficha-detalle" class="ficha__detalle"></p>
+      <div class="ficha__compra">
+        <span id="ficha-precio" class="ficha__precio"></span>
+        <button type="button" id="ficha-agregar" class="btn btn--agregar"></button>
+      </div>
+      <a id="ficha-preguntar" class="ficha__preguntar" target="_blank" rel="noopener">Preguntar por este disco en WhatsApp</a>
+      <section class="canciones" aria-labelledby="canciones-titulo">
+        <h3 id="canciones-titulo">Canciones</h3>
+        <p id="canciones-estado" class="canciones__estado"></p>
+        <ol id="canciones" class="canciones__lista"></ol>
+      </section>
+    </div>
+  </dialog>
 
   <!-- ===== MI PEDIDO ===== -->
   <!-- Barra fija que aparece cuando hay discos en el pedido -->

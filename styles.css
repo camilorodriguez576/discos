@@ -1,83 +1,68 @@
 /* ============================================================
-   ESTILOS · look nostálgico de tienda de discos
+   ESTILOS · tienda de discos limpia y moderna
+   Idea: cada disco es un estuche de CD; el precio va como sticker
+   amarillo sobre la portada, como en las bateas de una disquería.
    Los colores están en variables: cambias uno aquí y cambia en toda la página.
    ============================================================ */
 
 :root {
-  --fondo: #f5efe4;
-  --superficie: #fffaf2;
-  --tinta: #1f1b17;
-  --tinta-suave: #6b6158;
-  --borde: #e4d9c7;
-  --acento: #c8401a;       /* rojo-naranja retro */
-  --acento-suave: #f6dccf;
-  --nuevo: #0f6e5c;
-  --nuevo-suave: #d4ece5;
-  --wa: #1f9d55;           /* verde WhatsApp */
+  --papel: #eff1f5;        /* fondo: gris frío, como el plástico de un estuche */
+  --superficie: #ffffff;
+  --tinta: #14151b;
+  --tinta-2: #5a5f6c;
+  --linea: #d9dce4;
+  --cobalto: #2340d9;      /* acento */
+  --cobalto-suave: #e2e7ff;
+  --sticker: #ffd23f;      /* sticker de precio */
+  --sticker-tinta: #1d1700;
+  --usado: #c2410c;
+  --usado-suave: #ffe8dc;
+  --nuevo: #127a4a;
+  --nuevo-suave: #d8f3e4;
+  --wa: #1f9d55;
   --wa-hover: #188247;
-  --sombra: 0 1px 2px rgb(0 0 0 / .06), 0 4px 14px rgb(0 0 0 / .06);
+  --velo: rgb(20 21 27 / .55);
+  --sombra: 0 1px 2px rgb(20 21 27 / .06), 0 12px 32px rgb(20 21 27 / .10);
+
+  --f-display: "Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --f-texto: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
   --radio: 14px;
+  --ancho: 1180px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --fondo: #15120f;
-    --superficie: #1f1b17;
-    --tinta: #f3ece1;
-    --tinta-suave: #a89d90;
-    --borde: #352e27;
-    --acento: #ff7a45;
-    --acento-suave: #3a2318;
-    --nuevo: #5fd0b4;
-    --nuevo-suave: #12302a;
-    --sombra: 0 1px 2px rgb(0 0 0 / .4), 0 4px 14px rgb(0 0 0 / .3);
+    --papel: #0e0f13; --superficie: #17181f; --tinta: #eef0f4; --tinta-2: #a2a7b4; --linea: #2b2d37;
+    --cobalto: #8ea2ff; --cobalto-suave: #1c2352;
+    --usado: #ff9a6b; --usado-suave: #3a1d10; --nuevo: #5fd394; --nuevo-suave: #10301f;
+    --velo: rgb(0 0 0 / .7);
+    --sombra: 0 1px 2px rgb(0 0 0 / .4), 0 12px 32px rgb(0 0 0 / .4);
+    color-scheme: dark;
   }
+}
+:root[data-theme="dark"] {
+  --papel: #0e0f13; --superficie: #17181f; --tinta: #eef0f4; --tinta-2: #a2a7b4; --linea: #2b2d37;
+  --cobalto: #8ea2ff; --cobalto-suave: #1c2352;
+  --usado: #ff9a6b; --usado-suave: #3a1d10; --nuevo: #5fd394; --nuevo-suave: #10301f;
+  --velo: rgb(0 0 0 / .7);
+  --sombra: 0 1px 2px rgb(0 0 0 / .4), 0 12px 32px rgb(0 0 0 / .4);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
-  background: var(--fondo);
+  background: var(--papel);
   color: var(--tinta);
-  font-family: "Inter", system-ui, sans-serif;
-  line-height: 1.5;
+  font: 400 1rem/1.55 var(--f-texto);
 }
-
-h1, h2, h3 { font-family: "Archivo Black", "Inter", sans-serif; font-weight: 400; line-height: 1.1; }
-
-/* ---------- Cabecera ---------- */
-.hero {
-  background: #1f1b17;
-  color: #f5efe4;
-  padding: 40px 16px;
-  overflow: hidden;
-}
-.hero__inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-}
-.hero h1 { font-size: clamp(2rem, 6vw, 3.5rem); margin: 0 0 8px; }
-.hero__lema { margin: 0 0 20px; color: #cfc4b4; font-size: 1.05rem; }
-
-/* CD dibujado solo con CSS */
-.cd {
-  flex: 0 0 auto;
-  width: clamp(120px, 26vw, 220px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, #1f1b17 0 9%, #d9d4cc 9.5% 15%, transparent 15.5%),
-    conic-gradient(from 30deg, #c9d6e3, #e8c8e0, #f3e6b5, #b9e3d0, #c9d6e3, #e8c8e0, #f3e6b5, #b9e3d0, #c9d6e3);
-  box-shadow: 0 0 0 2px #ffffff22, 0 10px 40px rgb(0 0 0 / .5);
-  animation: girar 12s linear infinite;
-}
-@keyframes girar { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .cd { animation: none; } }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 800; line-height: 1.05; letter-spacing: -.02em; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+:focus-visible { outline: 3px solid var(--cobalto); outline-offset: 2px; border-radius: 6px; }
+.mono { font-family: var(--f-mono); font-size: .74rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
 
 /* ---------- Botones ---------- */
 .btn {
@@ -87,95 +72,184 @@ h1, h2, h3 { font-family: "Archivo Black", "Inter", sans-serif; font-weight: 400
   gap: 8px;
   border: 0;
   border-radius: 999px;
-  padding: 12px 22px;
-  font: 600 1rem "Inter", sans-serif;
+  padding: 12px 20px;
+  font: 700 .95rem var(--f-texto);
   text-decoration: none;
   cursor: pointer;
+  white-space: nowrap;
 }
+.btn--chico { padding: 8px 14px; font-size: .85rem; }
 .btn--wa { background: var(--wa); color: #fff; }
 .btn--wa:hover { background: var(--wa-hover); }
 .btn--wa::before {
   content: "";
   width: 18px; height: 18px;
+  flex: 0 0 auto;
   background: currentColor;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.8-1.2.2-.6.2-1.1.1-1.2l-.3-.3Z'/%3E%3C/svg%3E") center / contain no-repeat;
           mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.7.7 2.4.8 3.2.7.5-.1 1.5-.6 1.8-1.2.2-.6.2-1.1.1-1.2l-.3-.3Z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
+.btn--linea { background: transparent; color: var(--tinta); box-shadow: inset 0 0 0 1.5px var(--linea); }
+.btn--linea:hover { box-shadow: inset 0 0 0 1.5px var(--tinta); }
+.btn--agregar { background: var(--tinta); color: var(--papel); }
+.btn--agregar[aria-pressed="true"] { background: var(--nuevo); color: #fff; }
+
+/* ---------- Barra superior ---------- */
+.barra {
+  max-width: var(--ancho);
+  margin: 0 auto;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.marca { display: flex; align-items: center; gap: 10px; color: var(--tinta); text-decoration: none; font: 800 1.15rem var(--f-display); letter-spacing: -.02em; }
+.marca__cd {
+  width: 28px; height: 28px; border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--papel) 0 14%, transparent 15%),
+    conic-gradient(from 20deg, #c8d4ff, #f6c9ef, #fff1b8, #b7f0d8, #c8d4ff);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08);
+}
+
+/* ---------- Portada ---------- */
+.intro {
+  max-width: var(--ancho);
+  margin: 0 auto;
+  padding: 20px 16px 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 32px;
+  align-items: center;
+}
+.intro__texto { display: grid; gap: 12px; min-width: 0; }
+.intro__eyebrow { color: var(--cobalto); font-weight: 700; }
+.intro h1 { font-size: clamp(2.2rem, 6.4vw, 4.6rem); max-width: 14ch; }
+.intro h1 em { font-style: normal; color: var(--cobalto); }
+.intro__lema { color: var(--tinta-2); font-size: 1.08rem; max-width: 46ch; }
+
+/* Estuche con el CD asomándose (decorativo) */
+.intro__arte { position: relative; width: clamp(150px, 28vw, 300px); aspect-ratio: 1.35; }
+.arte__estuche, .arte__cd { position: absolute; top: 0; aspect-ratio: 1; height: 100%; }
+.arte__estuche {
+  left: 0; z-index: 1; border-radius: 6px;
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / .35) 0 5%, transparent 5.5%),
+    linear-gradient(135deg, var(--cobalto), color-mix(in srgb, var(--cobalto) 50%, #000));
+  box-shadow: var(--sombra), inset 0 0 0 1px rgb(255 255 255 / .25);
+}
+.arte__cd {
+  right: 0; border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--papel) 0 7%, rgb(255 255 255 / .8) 7.5% 9%, transparent 9.5%),
+    radial-gradient(circle, transparent 0 15%, rgb(255 255 255 / .5) 15.5% 16.5%, transparent 17%),
+    conic-gradient(from 20deg, #c8d4ff, #f6c9ef, #fff1b8, #b7f0d8, #b9d3ff, #f2c4ff, #ffe7a8, #bdf2e4, #c8d4ff);
+  box-shadow: var(--sombra);
+  animation: girar 10s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
 
 /* ---------- Filtros ---------- */
-main { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+main { max-width: var(--ancho); margin: 0 auto; padding-inline: 16px; }
 
 .filtros {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0px);
   z-index: 5;
-  background: var(--fondo);
-  padding: 20px 0 8px;
+  display: grid;
+  gap: 8px;
+  padding-block: 10px;
+  background: var(--papel);
 }
 #buscar {
   width: 100%;
-  padding: 14px 18px;
-  font: 500 1rem "Inter", sans-serif;
+  padding: 12px 18px;
+  font: 500 1rem var(--f-texto);
   color: var(--tinta);
   background: var(--superficie);
-  border: 2px solid var(--borde);
+  border: 1.5px solid var(--linea);
   border-radius: 999px;
   outline: none;
 }
-#buscar:focus { border-color: var(--acento); }
-
-.filtros__fila {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 12px;
-  align-items: center;
-}
+#buscar:focus { border-color: var(--cobalto); }
+/* En el celular la fila de filtros se desliza de lado en vez de ocupar media pantalla */
+.filtros__fila { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.filtros__fila::-webkit-scrollbar { display: none; }
 .chips { display: flex; gap: 6px; }
 .chip, select {
-  font: 600 .9rem "Inter", sans-serif;
+  flex: 0 0 auto;
+  font: 600 .85rem var(--f-texto);
   color: var(--tinta);
   background: var(--superficie);
-  border: 1.5px solid var(--borde);
+  border: 1.5px solid var(--linea);
   border-radius: 999px;
-  padding: 8px 14px;
+  padding: 7px 14px;
   cursor: pointer;
 }
-.chip.is-active { background: var(--tinta); color: var(--fondo); border-color: var(--tinta); }
-select { max-width: 100%; }
-.contador { margin: 10px 2px 0; font-size: .9rem; color: var(--tinta-suave); }
+.chip.is-active { background: var(--tinta); color: var(--papel); border-color: var(--tinta); }
+.contador { color: var(--tinta-2); padding: 4px 2px 0; }
 
 /* ---------- Catálogo ---------- */
 .catalogo {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 16px;
-  padding: 8px 0 40px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 28px 18px;
+  padding-block: 14px 48px;
 }
 
-.disco {
-  display: flex;
-  flex-direction: column;
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  overflow: hidden;
-  box-shadow: var(--sombra);
+.disco { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+/* El estuche: la portada con el CD escondido detrás */
+.disco__abrir {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
 }
+.disco__cd {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--papel) 0 8%, transparent 8.5%),
+    conic-gradient(from 20deg, #c8d4ff, #f6c9ef, #fff1b8, #b7f0d8, #c8d4ff, #f2c4ff, #ffe7a8, #c8d4ff);
+  transition: transform .35s ease;
+}
+.disco__abrir:hover .disco__cd, .disco__abrir:focus-visible .disco__cd { transform: translateX(16%) rotate(40deg); }
 
 .portada {
   position: relative;
   aspect-ratio: 1;
+  max-width: 100%;
   display: grid;
   place-items: center;
   padding: 14px;
+  overflow: hidden;
+  border-radius: 4px;
   text-align: center;
   color: #fff;
-  font: 400 1.05rem "Archivo Black", sans-serif;
-  line-height: 1.15;
+  font: 800 1.05rem/1.1 var(--f-display);
   /* --h lo pone app.js para que cada portada provisional tenga su color */
-  background: linear-gradient(135deg, hsl(var(--h, 20) 55% 42%), hsl(calc(var(--h, 20) + 40) 50% 22%));
+  background: linear-gradient(135deg, hsl(var(--h, 220) 55% 45%), hsl(calc(var(--h, 220) + 40) 50% 22%));
+  box-shadow: 0 1px 2px rgb(0 0 0 / .1), 0 8px 20px rgb(20 21 27 / .14);
+  transition: transform .35s ease;
 }
+/* Brillo del plástico y bisagra del estuche */
+.portada::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / .22) 0 4%, rgb(0 0 0 / .12) 4% 4.6%, transparent 4.6%),
+    linear-gradient(125deg, rgb(255 255 255 / .22), transparent 38%);
+  pointer-events: none;
+}
+.disco__abrir:hover .portada { transform: translateX(-4%); }
 .portada img {
   position: absolute;
   inset: 0;
@@ -187,186 +261,92 @@ select { max-width: 100%; }
 }
 .portada img.is-loaded { opacity: 1; }
 
-.etiquetas {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  display: flex;
-  gap: 4px;
-  z-index: 1;
-}
+.etiquetas { position: absolute; top: 8px; left: 12%; z-index: 3; display: flex; gap: 4px; }
 .etq {
-  font: 700 .7rem "Inter", sans-serif;
-  letter-spacing: .03em;
+  font: 700 .62rem var(--f-mono);
+  letter-spacing: .05em;
   text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 999px;
+  padding: 3px 7px;
+  border-radius: 6px;
 }
 .etq--nuevo { background: var(--nuevo-suave); color: var(--nuevo); }
-.etq--usado { background: var(--acento-suave); color: var(--acento); }
-.etq--novedad { background: #f3c623; color: #1f1b17; }
+.etq--usado { background: var(--usado-suave); color: var(--usado); }
+.etq--novedad { background: var(--sticker); color: var(--sticker-tinta); }
 
-.disco__info { padding: 12px 14px 14px; display: flex; flex-direction: column; flex: 1; }
-.disco__album { margin: 0; font-weight: 700; font-size: 1rem; line-height: 1.25; }
-.disco__artista { margin: 2px 0 0; color: var(--tinta-suave); font-size: .9rem; }
-.disco__meta { margin: 4px 0 0; color: var(--tinta-suave); font-size: .8rem; }
-.disco__detalle { margin: 6px 0 0; font-size: .82rem; font-style: italic; color: var(--tinta-suave); }
-.disco__pie {
-  margin-top: auto;
-  padding-top: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
+/* Sticker de precio, como el de las disquerías */
+.sticker {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 3;
+  min-width: 56px;
+  height: 56px;
+  padding: 0 6px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--sticker);
+  color: var(--sticker-tinta);
+  font: 800 .95rem var(--f-display);
+  letter-spacing: -.02em;
+  transform: rotate(-8deg);
+  box-shadow: 0 3px 8px rgb(0 0 0 / .25);
 }
-.precio { font: 400 1.25rem "Archivo Black", sans-serif; color: var(--acento); }
-.precio--consultar { font: 600 .95rem "Inter", sans-serif; color: var(--tinta-suave); }
-.disco .btn { padding: 8px 14px; font-size: .88rem; }
+.sticker--consultar { font: 700 .56rem var(--f-mono); text-transform: uppercase; letter-spacing: .02em; }
 
-.btn--agregar {
-  background: transparent;
-  color: var(--tinta);
-  box-shadow: inset 0 0 0 1.5px var(--tinta);
+.disco__info { display: grid; gap: 2px; min-width: 0; }
+.disco__album {
+  margin: 0;
+  font: 700 1rem/1.25 var(--f-texto);
+  letter-spacing: 0;
+  cursor: pointer;
 }
-.btn--agregar[aria-pressed="true"] { background: var(--wa); color: #fff; box-shadow: none; }
+.disco__artista { color: var(--tinta-2); font-size: .9rem; }
+.disco__meta { color: var(--tinta-2); margin-top: 2px; }
+.disco .btn--agregar { width: 100%; padding: 10px 14px; font-size: .88rem; }
 
-.vacio { text-align: center; padding: 20px 0 50px; color: var(--tinta-suave); }
-.vacio h3 { color: var(--tinta); font-size: 1.3rem; margin: 0 0 6px; }
-.vacio p { margin: 0 0 14px; }
-.aviso { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.vacio { text-align: center; padding: 24px 0 56px; color: var(--tinta-2); display: grid; gap: 10px; justify-items: center; }
+.vacio h3 { color: var(--tinta); font-size: 1.5rem; }
+.aviso { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 4px; }
 .aviso input {
   flex: 0 1 240px;
   padding: 12px 16px;
-  font: 500 1rem "Inter", sans-serif;
+  font: 500 1rem var(--f-texto);
   color: var(--tinta);
   background: var(--superficie);
-  border: 2px solid var(--borde);
+  border: 1.5px solid var(--linea);
   border-radius: 999px;
 }
 
-/* ---------- Mi pedido ---------- */
-body.con-pedido { padding-bottom: 90px; } /* para que la barra no tape el pie */
-.barra-pedido {
-  position: fixed;
-  left: 50%;
-  bottom: 14px;
-  transform: translateX(-50%);
-  width: min(560px, calc(100% - 24px));
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 10px 10px 18px;
-  background: #1f1b17;
-  color: #f5efe4;
-  border-radius: 18px;
-  box-shadow: 0 10px 30px rgb(0 0 0 / .3);
-}
-.barra-pedido .btn { flex: 0 0 auto; white-space: nowrap; }
-.barra-pedido b { display: block; }
-.barra-pedido small { color: #cfc4b4; font-size: .85rem; }
-
-.resumen {
-  width: min(480px, calc(100% - 24px));
-  max-height: calc(100% - 24px);
-  border: 0;
-  border-radius: var(--radio);
-  padding: 20px;
-  background: var(--superficie);
-  color: var(--tinta);
-  box-shadow: var(--sombra);
-}
-.resumen::backdrop { background: rgb(0 0 0 / .5); }
-.resumen__cabeza { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.resumen__cabeza h2 { margin: 0; font-size: 1.5rem; }
-.resumen__cerrar { border: 0; background: none; color: var(--tinta); font-size: 1.8rem; line-height: 1; cursor: pointer; padding: 0 4px; }
-.lineas { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.lineas li {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 10px;
-  align-items: center;
-  padding: 10px 12px;
-  background: var(--fondo);
-  border: 1px solid var(--borde);
-  border-radius: 12px;
-}
-.lineas b { display: block; font-size: .95rem; line-height: 1.25; }
-.lineas small { color: var(--tinta-suave); font-size: .82rem; }
-.lineas .monto { font-weight: 700; white-space: nowrap; }
-.quitar { border: 0; background: none; color: var(--tinta-suave); font-size: 1.3rem; cursor: pointer; padding: 2px 6px; }
-.total {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin: 14px 0;
-  padding-top: 10px;
-  border-top: 2px solid var(--tinta);
-}
-.total span { color: var(--tinta-suave); font-size: .9rem; }
-.total b { font: 400 1.5rem "Archivo Black", sans-serif; color: var(--acento); }
-.formas { border: 0; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
-.formas legend { font-weight: 700; margin-bottom: 6px; }
-.formas label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1.5px solid var(--borde);
-  border-radius: 12px;
-  cursor: pointer;
-}
-.formas label:has(input:checked) { border-color: var(--acento); background: var(--acento-suave); }
-.formas input { accent-color: var(--acento); width: 18px; height: 18px; margin: 0; }
-.aviso-pago {
-  margin: 0 0 14px;
-  padding: 10px 12px;
-  font-size: .85rem;
-  color: var(--tinta-suave);
-  border: 1px dashed var(--borde);
-  border-radius: 10px;
-}
-.resumen__enviar { width: 100%; }
-
 /* ---------- Cómo comprar ---------- */
 .como {
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: var(--radio);
-  padding: 28px 22px;
+  border-top: 2px solid var(--tinta);
+  padding-block: 28px 8px;
   margin-bottom: 40px;
+  display: grid;
+  gap: 24px;
 }
-.como h2 { margin: 0 0 20px; font-size: 1.7rem; }
+.como h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
 .pasos {
   list-style: none;
   padding: 0;
-  margin: 0 0 24px;
+  margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
 }
-.pasos span {
-  display: inline-grid;
-  place-items: center;
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  background: var(--acento);
-  color: #fff;
-  font-family: "Archivo Black", sans-serif;
-  margin-bottom: 6px;
-}
-.pasos strong { display: block; }
-.pasos p { margin: 4px 0 0; color: var(--tinta-suave); font-size: .92rem; }
+.pasos li { display: grid; gap: 4px; align-content: start; }
+.pasos span { color: var(--cobalto); font-weight: 700; font-size: .85rem; }
+.pasos strong { font-size: 1.1rem; }
+.pasos p { color: var(--tinta-2); font-size: .95rem; }
 
-.info { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
-.info h3 { font-size: 1.05rem; margin: 0 0 8px; }
-.info ul { margin: 0; padding-left: 18px; color: var(--tinta-suave); }
+.info { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.info > div { background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--radio); padding: 18px; }
+.info h3 { font-size: 1.1rem; margin-bottom: 8px; }
+.info ul { margin: 0; padding-left: 18px; color: var(--tinta-2); }
 .tags { list-style: none; padding: 0 !important; display: flex; flex-wrap: wrap; gap: 8px; }
 .tags li {
-  background: var(--fondo);
-  border: 1px solid var(--borde);
+  border: 1.5px solid var(--linea);
   border-radius: 999px;
   padding: 4px 12px;
   font-weight: 600;
@@ -375,20 +355,282 @@ body.con-pedido { padding-bottom: 90px; } /* para que la barra no tape el pie */
 }
 
 /* ---------- Pie ---------- */
-.pie { text-align: center; padding: 24px 16px 40px; color: var(--tinta-suave); font-size: .9rem; }
-.pie p { margin: 4px 0; }
-.redes a { color: var(--acento); font-weight: 600; margin: 0 8px; }
+.pie { text-align: center; padding: 24px 16px 40px; color: var(--tinta-2); font-size: .9rem; }
+.redes a { color: var(--cobalto); font-weight: 600; margin: 0 8px; }
+
+/* ============================================================
+   FICHA DEL DISCO con el estuche en 3D
+   ============================================================ */
+.ficha {
+  width: min(980px, calc(100% - 24px));
+  max-height: calc(100% - 24px);
+  border: 0;
+  border-radius: 22px;
+  padding: 0;
+  background: var(--superficie);
+  color: var(--tinta);
+  box-shadow: var(--sombra);
+}
+.ficha[open] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.ficha::backdrop { background: var(--velo); backdrop-filter: blur(4px); }
+.ficha__cerrar {
+  position: absolute; top: 10px; right: 12px; z-index: 10;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 0; background: var(--superficie); color: var(--tinta);
+  font-size: 1.6rem; line-height: 1; cursor: pointer;
+  box-shadow: 0 0 0 1px var(--linea);
+}
+
+.ficha__escena {
+  background:
+    radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--cobalto) 22%, var(--papel)), var(--papel) 70%);
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 14px;
+  padding: 48px 20px 20px;
+  min-width: 0;
+  overflow: hidden;
+}
+.ficha__controles { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; position: relative; z-index: 2; }
+.ficha__pista { color: var(--tinta-2); }
+
+/* --w = lado del estuche, --d = grosor */
+.escena {
+  --w: min(330px, 62vw);
+  --d: 16px;
+  width: var(--w);
+  height: var(--w);
+  perspective: 1100px;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.escena:active { cursor: grabbing; }
+.estuche {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx, -8deg)) rotateY(var(--ry, -24deg));
+  transition: transform .6s cubic-bezier(.2, .7, .2, 1);
+}
+.estuche.arrastrando { transition: none; }
+.cara { position: absolute; backface-visibility: hidden; }
+.cara--frente, .cara--atras { inset: 0; border-radius: 3px; overflow: hidden; }
+.cara--frente { transform: translateZ(calc(var(--d) / 2)); }
+.cara--atras  { transform: rotateY(180deg) translateZ(calc(var(--d) / 2)); background: #101116; color: #e9ebf1; }
+.cara--lomo-izq, .cara--lomo-der {
+  top: 0; width: var(--d); height: 100%; left: calc(50% - var(--d) / 2);
+  background: linear-gradient(90deg, #1b1c22, #2d2f38, #1b1c22);
+}
+.cara--lomo-izq { transform: rotateY(-90deg) translateZ(calc(var(--w) / 2)); display: grid; place-items: center; }
+.cara--lomo-der { transform: rotateY(90deg) translateZ(calc(var(--w) / 2)); background: linear-gradient(90deg, #c9ccd6, #f4f5f8, #c9ccd6); }
+.cara--lomo-izq span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font: 700 .55rem var(--f-mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #e9ebf1;
+  white-space: nowrap;
+  overflow: hidden;
+  max-height: 94%;
+}
+.cara--arriba, .cara--abajo {
+  left: 0; width: 100%; height: var(--d); top: calc(50% - var(--d) / 2);
+  background: linear-gradient(#c9ccd6, #f4f5f8, #c9ccd6);
+}
+.cara--arriba { transform: rotateX(90deg) translateZ(calc(var(--w) / 2)); }
+.cara--abajo  { transform: rotateX(-90deg) translateZ(calc(var(--w) / 2)); }
+
+.tapa {
+  position: absolute; inset: 0;
+  display: grid; place-items: center; padding: 20px; text-align: center;
+  color: #fff; font: 800 1.4rem/1.1 var(--f-display);
+  background: linear-gradient(135deg, hsl(var(--h, 220) 55% 45%), hsl(calc(var(--h, 220) + 40) 50% 22%)) center / cover no-repeat;
+}
+.tapa.con-imagen { font-size: 0; }
+.cara--frente::after { /* plástico brillante */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(120deg, rgb(255 255 255 / .38), transparent 32%, transparent 62%, rgb(255 255 255 / .14));
+}
+.bisagra {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 6%; z-index: 1;
+  background: linear-gradient(90deg, rgb(255 255 255 / .45), rgb(255 255 255 / .15) 70%, rgb(0 0 0 / .25));
+}
+
+/* Contraportada: canciones y código de barras, como un CD de verdad */
+.contra { position: absolute; inset: 0; padding: 7% 8%; display: flex; flex-direction: column; gap: 6px; }
+.contra b { font: 800 .9rem/1.1 var(--f-display); }
+.contra ol {
+  margin: 0; padding-left: 16px; flex: 1; overflow: hidden;
+  font: 500 .52rem/1.5 var(--f-mono); letter-spacing: .02em; color: #b8bcc8;
+  columns: 2; column-gap: 12px;
+}
+.contra__barras { align-self: flex-end; background: #fff; color: #111; padding: 4px 6px 2px; border-radius: 2px; display: grid; justify-items: center; gap: 1px; }
+.contra__barras .mono { font-size: .45rem; letter-spacing: .1em; }
+.barras {
+  display: block; width: 64px; height: 22px;
+  background: repeating-linear-gradient(90deg, #111 0 2px, transparent 2px 3px, #111 3px 4px, transparent 4px 6px, #111 6px 9px, transparent 9px 10px);
+}
+
+/* El CD dentro del estuche */
+.cd3d {
+  position: absolute; inset: 3%;
+  transform: translateZ(0);
+  transition: transform .8s cubic-bezier(.2, .7, .2, 1);
+}
+.cd3d.fuera { transform: translateX(62%) translateZ(0); }
+.cd3d__disco {
+  width: 100%; height: 100%; border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0 7%, rgb(255 255 255 / .85) 7.5% 9%, transparent 9.5% 97%, rgb(255 255 255 / .6) 97.5%),
+    conic-gradient(from 20deg, #c8d4ff, #f6c9ef, #fff1b8, #b7f0d8, #b9d3ff, #f2c4ff, #ffe7a8, #bdf2e4, #c8d4ff);
+  box-shadow: 0 6px 20px rgb(0 0 0 / .3);
+  display: grid; place-items: center;
+}
+.cd3d.fuera .cd3d__disco { animation: girar 3s linear infinite; }
+/* Etiqueta impresa del CD con la portada, y el agujero al centro */
+.cd3d__etiqueta {
+  width: 58%; aspect-ratio: 1; border-radius: 50%;
+  background: hsl(var(--h, 220) 50% 40%) center / cover no-repeat;
+  -webkit-mask: radial-gradient(circle, transparent 0 13%, #000 13.5%);
+          mask: radial-gradient(circle, transparent 0 13%, #000 13.5%);
+}
+
+/* Datos del disco */
+.ficha__info { padding: 48px 32px 32px; display: flex; flex-direction: column; gap: 12px; min-width: 0; overflow-y: auto; }
+.ficha__etiquetas { display: flex; gap: 6px; }
+.ficha__info h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); }
+.ficha__artista { font-size: 1.15rem; color: var(--tinta-2); font-weight: 600; margin-top: -4px; }
+.ficha__datos { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 4px 0 0; }
+.ficha__datos div { display: grid; }
+.ficha__datos dt { font: 500 .66rem var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-2); }
+.ficha__datos dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ficha__detalle { font-style: italic; color: var(--tinta-2); }
+.ficha__compra {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding-block: 14px; border-block: 1px solid var(--linea); margin-top: 6px;
+}
+.ficha__precio { font: 800 2rem var(--f-display); letter-spacing: -.03em; }
+.ficha__precio--consultar { font: 700 1rem var(--f-texto); color: var(--tinta-2); }
+.ficha__preguntar { color: var(--cobalto); font-weight: 600; font-size: .92rem; }
+
+.canciones { display: grid; gap: 8px; margin-top: 8px; }
+.canciones h3 { font-size: 1.15rem; }
+.canciones__estado { color: var(--tinta-2); font-size: .9rem; }
+.canciones__lista { list-style: none; margin: 0; padding: 0; counter-reset: pista; }
+.canciones__lista li {
+  counter-increment: pista;
+  display: grid;
+  grid-template-columns: 2.4ch minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 7px 0;
+  border-top: 1px solid var(--linea);
+  font-size: .93rem;
+}
+.canciones__lista li::before { content: counter(pista); font: 500 .8rem var(--f-mono); color: var(--tinta-2); padding-top: 2px; }
+.canciones__lista span:last-child { font: 500 .8rem var(--f-mono); color: var(--tinta-2); font-variant-numeric: tabular-nums; padding-top: 2px; }
+
+/* ---------- Mi pedido ---------- */
+body.con-pedido { padding-bottom: 90px; } /* para que la barra no tape el pie */
+.barra-pedido {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 24px));
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 10px 10px 18px;
+  background: var(--tinta);
+  color: var(--papel);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / .3);
+}
+.barra-pedido .btn { flex: 0 0 auto; }
+.barra-pedido b { display: block; }
+.barra-pedido small { opacity: .7; font-size: .85rem; }
+
+.resumen {
+  width: min(480px, calc(100% - 24px));
+  max-height: calc(100% - 24px);
+  border: 0;
+  border-radius: 22px;
+  padding: 22px;
+  background: var(--superficie);
+  color: var(--tinta);
+  box-shadow: var(--sombra);
+}
+.resumen::backdrop { background: var(--velo); backdrop-filter: blur(4px); }
+.resumen__cabeza { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.resumen__cabeza h2 { font-size: 1.6rem; }
+.resumen__cerrar { border: 0; background: none; color: var(--tinta); font-size: 1.8rem; line-height: 1; cursor: pointer; padding: 0 4px; }
+.lineas { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.lineas li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--papel);
+  border-radius: 12px;
+}
+.lineas b { display: block; font-size: .95rem; line-height: 1.25; }
+.lineas small { color: var(--tinta-2); font-size: .82rem; }
+.lineas .monto { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.quitar { border: 0; background: none; color: var(--tinta-2); font-size: 1.3rem; cursor: pointer; padding: 2px 6px; }
+.total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 14px 0;
+  padding-top: 10px;
+  border-top: 2px solid var(--tinta);
+}
+.total span { color: var(--tinta-2); font-size: .9rem; }
+.total b { font: 800 1.6rem var(--f-display); }
+.formas { border: 0; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.formas legend { font-weight: 700; margin-bottom: 6px; }
+.formas label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--linea);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.formas label:has(input:checked) { border-color: var(--cobalto); background: var(--cobalto-suave); }
+.formas input { accent-color: var(--cobalto); width: 18px; height: 18px; margin: 0; }
+.aviso-pago {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  font-size: .85rem;
+  color: var(--tinta-2);
+  border: 1px dashed var(--linea);
+  border-radius: 10px;
+}
+.resumen__enviar { width: 100%; }
 
 /* ---------- Celular ---------- */
+@media (max-width: 760px) {
+  .ficha { width: 100%; max-width: 100%; max-height: 100%; height: 100%; border-radius: 0; margin: 0; }
+  .ficha[open] { display: block; overflow-y: auto; }
+  .ficha__escena { padding: 56px 16px 18px; }
+  .ficha__info { padding: 22px 18px 40px; overflow: visible; }
+}
 @media (max-width: 560px) {
-  .hero { padding: 28px 16px; }
-  .hero__inner { gap: 12px; }
-  .cd { width: 96px; }
-  .catalogo { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .disco__info { padding: 10px; }
-  .disco__pie { flex-direction: column; align-items: stretch; }
-  .disco .btn { width: 100%; }
-  .chips { width: 100%; }
-  .chip { flex: 1; }
-  select { flex: 1; }
+  .intro { grid-template-columns: minmax(0, 1fr); gap: 0; padding-bottom: 12px; }
+  .intro__arte { display: none; }
+  .catalogo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 12px; }
+  .sticker { min-width: 48px; height: 48px; font-size: .82rem; right: 6px; bottom: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arte__cd, .cd3d.fuera .cd3d__disco { animation: none; }
+  .estuche, .cd3d, .disco__cd, .portada { transition: none; }
 }

@@ -88,29 +88,33 @@ function discosFiltrados() {
 
 function tarjeta(d) {
   const enPedido = pedido.has(claveDisco(d));
-  const claseEstado = d.estado === "Nuevo" ? "etq--nuevo" : "etq--usado";
+  const c = escapar(claveDisco(d));
   return `
     <article class="disco">
-      <div class="portada" style="--h:${tono(d.artista + d.album)}"
-           data-artista="${escapar(d.artista)}" data-album="${escapar(d.album)}" data-portada="${escapar(d.portada || "")}">
-        <div class="etiquetas">
-          <span class="etq ${claseEstado}">${escapar(d.estado)}</span>
-          ${d.novedad ? '<span class="etq etq--novedad">Llegó</span>' : ""}
+      <button type="button" class="disco__abrir" data-ficha="${c}" aria-label="Ver ${escapar(d.album)} de ${escapar(d.artista)}">
+        <span class="disco__cd" aria-hidden="true"></span>
+        <div class="portada" style="--h:${tono(d.artista + d.album)}"
+             data-artista="${escapar(d.artista)}" data-album="${escapar(d.album)}" data-portada="${escapar(d.portada || "")}">
+          ${etiquetasEstado(d)}
+          ${escapar(d.album)}
+          <span class="sticker${tienePrecio(d) ? "" : " sticker--consultar"}">${textoPrecio(d)}</span>
         </div>
-        ${escapar(d.album)}
-      </div>
+      </button>
       <div class="disco__info">
-        <h3 class="disco__album">${escapar(d.album)}</h3>
+        <h3 class="disco__album" data-ficha="${c}">${escapar(d.album)}</h3>
         <p class="disco__artista">${escapar(d.artista)}</p>
-        <p class="disco__meta">${[d.anio, d.genero].filter(Boolean).map(escapar).join(" · ")}</p>
-        ${d.detalle ? `<p class="disco__detalle">${escapar(d.detalle)}</p>` : ""}
-        <div class="disco__pie">
-          <span class="precio${tienePrecio(d) ? "" : " precio--consultar"}">${textoPrecio(d)}</span>
-          <button type="button" class="btn btn--agregar" data-clave="${escapar(claveDisco(d))}"
-                  aria-pressed="${enPedido}">${enPedido ? "✓ En tu pedido" : "Agregar al pedido"}</button>
-        </div>
+        <p class="disco__meta mono">${[d.anio, d.genero].filter(Boolean).map(escapar).join(" · ")}</p>
       </div>
+      <button type="button" class="btn btn--agregar" data-clave="${c}"
+              aria-pressed="${enPedido}">${enPedido ? "✓ En tu pedido" : "Agregar al pedido"}</button>
     </article>`;
+}
+
+function etiquetasEstado(d) {
+  return `<div class="etiquetas">
+      <span class="etq ${d.estado === "Nuevo" ? "etq--nuevo" : "etq--usado"}">${escapar(d.estado)}</span>
+      ${d.novedad ? '<span class="etq etq--novedad">Llegó</span>' : ""}
+    </div>`;
 }
 
 function pintarCatalogo() {
@@ -194,11 +198,42 @@ async function buscarEnDeezer(artista, album) {
   return r ? r.cover_big : null;
 }
 
-async function buscarEnItunes(artista, album) {
+async function albumEnItunes(artista, album) {
   const q = encodeURIComponent(`${artista} ${album}`);
   const datos = await jsonp(`https://itunes.apple.com/search?term=${q}&entity=album&limit=10&country=US`);
-  const r = elegir(datos?.results || [], artista, album, (x) => x.artistName, (x) => x.collectionName);
+  return elegir(datos?.results || [], artista, album, (x) => x.artistName, (x) => x.collectionName);
+}
+
+async function buscarEnItunes(artista, album) {
+  const r = await albumEnItunes(artista, album);
   return r ? r.artworkUrl100.replace("100x100bb", "600x600bb") : null;
+}
+
+// Lista de canciones del disco (iTunes y, si no está, Deezer)
+const cacheCanciones = new Map();
+async function buscarCanciones(artista, album) {
+  const clave = `${artista}|${album}`;
+  if (cacheCanciones.has(clave)) return cacheCanciones.get(clave);
+  let canciones = [];
+  const it = await albumEnItunes(artista, album);
+  if (it) {
+    const datos = await jsonp(`https://itunes.apple.com/lookup?id=${it.collectionId}&entity=song&country=US`);
+    canciones = (datos?.results || [])
+      .filter((x) => x.wrapperType === "track")
+      .sort((a, b) => a.discNumber - b.discNumber || a.trackNumber - b.trackNumber)
+      .map((x) => ({ titulo: x.trackName, ms: x.trackTimeMillis }));
+  }
+  if (!canciones.length) {
+    const q = encodeURIComponent(`artist:"${artista}" album:"${album}"`);
+    const datos = await jsonp(`https://api.deezer.com/search/album?q=${q}&limit=10&output=jsonp`);
+    const dz = elegir(datos?.data || [], artista, album, (x) => x.artist?.name, (x) => x.title);
+    if (dz) {
+      const pistas = await jsonp(`https://api.deezer.com/album/${dz.id}/tracks?limit=100&output=jsonp`);
+      canciones = (pistas?.data || []).map((x) => ({ titulo: x.title, ms: x.duration * 1000 }));
+    }
+  }
+  cacheCanciones.set(clave, canciones);
+  return canciones;
 }
 
 async function buscarPortada(artista, album) {
@@ -310,9 +345,143 @@ function alternarEnPedido(c) {
   pintarBarraPedido();
 }
 
+// ---------- Ficha del disco (estuche en 3D) ----------
+
+const $ = (id) => document.getElementById(id);
+let fichaActual = null;
+const giro = { rx: -8, ry: -24 };
+
+function ponerGiro() {
+  $("estuche").style.setProperty("--rx", `${giro.rx}deg`);
+  $("estuche").style.setProperty("--ry", `${giro.ry}deg`);
+  // ¿Se está viendo la parte de atrás?
+  const angulo = ((giro.ry % 360) + 360) % 360;
+  $("btn-girar").textContent = angulo > 90 && angulo < 270 ? "Ver portada" : "Ver contraportada";
+}
+
+const duracion = (ms) => {
+  const s = Math.round((ms || 0) / 1000);
+  return s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : "";
+};
+
+async function urlPortada(d) {
+  if (d.portada) return d.portada;
+  const clave = `${d.artista}|${d.album}`;
+  if (!(clave in cachePortadas)) {
+    cachePortadas[clave] = await buscarPortada(d.artista, d.album);
+    guardarCache();
+  }
+  return cachePortadas[clave];
+}
+
+function pintarBotonFicha() {
+  const esta = pedido.has(claveDisco(fichaActual));
+  $("ficha-agregar").setAttribute("aria-pressed", esta);
+  $("ficha-agregar").textContent = esta ? "✓ En tu pedido" : "Agregar al pedido";
+}
+
+async function abrirFicha(c) {
+  const d = disponibles.find((x) => claveDisco(x) === c);
+  if (!d) return;
+  fichaActual = d;
+  const ficha = $("ficha");
+  ficha.style.setProperty("--h", tono(d.artista + d.album));
+
+  // Estuche: vuelve a su posición, con el disco guardado
+  Object.assign(giro, { rx: -8, ry: -24 });
+  ponerGiro();
+  $("cd3d").classList.remove("fuera");
+  $("btn-sacar").textContent = "Sacar el disco";
+
+  const tapa = $("tapa-frente");
+  tapa.textContent = d.album;
+  tapa.classList.remove("con-imagen");
+  tapa.style.backgroundImage = "";
+  $("cd-etiqueta").style.backgroundImage = "";
+  $("lomo-texto").textContent = `${d.artista} · ${d.album}`;
+  $("contra-titulo").textContent = d.album;
+  $("contra-codigo").textContent = d.codigo || "";
+  $("contra-canciones").innerHTML = "";
+
+  // Datos
+  $("ficha-etiquetas").innerHTML = etiquetasEstado(d).replace(/<\/?div[^>]*>/g, "");
+  $("ficha-album").textContent = d.album;
+  $("ficha-artista").textContent = d.artista;
+  $("ficha-datos").innerHTML = [["Año", d.anio], ["Género", d.genero], ["Estado", d.estado], ["Código", d.codigo]]
+    .filter(([, v]) => v)
+    .map(([k, v]) => `<div><dt>${k}</dt><dd>${escapar(v)}</dd></div>`).join("");
+  $("ficha-detalle").textContent = d.detalle || "";
+  $("ficha-detalle").hidden = !d.detalle;
+  $("ficha-precio").textContent = textoPrecio(d);
+  $("ficha-precio").className = "ficha__precio" + (tienePrecio(d) ? "" : " ficha__precio--consultar");
+  pintarBotonFicha();
+  $("ficha-preguntar").href = linkWhatsApp(tienePrecio(d)
+    ? `Hola, me interesa el CD "${d.album}" de ${d.artista} (${d.estado}, ${formatoPrecio(d.precio)}). ¿Sigue disponible?`
+    : `Hola, me interesa el CD "${d.album}" de ${d.artista} (${d.estado}). ¿Cuál es su precio?`);
+
+  $("canciones").innerHTML = "";
+  $("canciones-estado").textContent = "Buscando las canciones…";
+  $("canciones-estado").hidden = false;
+
+  if (!ficha.open) ficha.showModal();
+
+  // Portada y canciones llegan de internet; si mientras tanto abrió otro disco, no se pintan
+  urlPortada(d).then((url) => {
+    if (fichaActual !== d || !url) return;
+    tapa.style.backgroundImage = `url("${url}")`;
+    tapa.classList.add("con-imagen");
+    $("cd-etiqueta").style.backgroundImage = `url("${url}")`;
+  });
+  const canciones = await buscarCanciones(d.artista, d.album);
+  if (fichaActual !== d) return;
+  if (!canciones.length) {
+    $("canciones-estado").textContent = "No encontramos la lista de canciones de este disco.";
+    return;
+  }
+  $("canciones-estado").hidden = true;
+  $("canciones").innerHTML = canciones
+    .map((x) => `<li><span>${escapar(x.titulo)}</span><span>${duracion(x.ms)}</span></li>`).join("");
+  $("contra-canciones").innerHTML = canciones.slice(0, 20).map((x) => `<li>${escapar(x.titulo)}</li>`).join("");
+}
+
+// Girar el estuche arrastrando con el dedo o el mouse
+(function () {
+  const escena = $("escena");
+  let inicio = null;
+  escena.addEventListener("pointerdown", (e) => {
+    inicio = { x: e.clientX, y: e.clientY, rx: giro.rx, ry: giro.ry };
+    escena.setPointerCapture(e.pointerId);
+    $("estuche").classList.add("arrastrando");
+  });
+  escena.addEventListener("pointermove", (e) => {
+    if (!inicio) return;
+    giro.ry = inicio.ry + (e.clientX - inicio.x) * 0.6;
+    giro.rx = Math.max(-45, Math.min(45, inicio.rx - (e.clientY - inicio.y) * 0.4));
+    ponerGiro();
+  });
+  const soltar = () => { inicio = null; $("estuche").classList.remove("arrastrando"); };
+  escena.addEventListener("pointerup", soltar);
+  escena.addEventListener("pointercancel", soltar);
+})();
+
+$("btn-girar").addEventListener("click", () => { giro.ry += 180; ponerGiro(); });
+$("btn-sacar").addEventListener("click", () => {
+  const fuera = $("cd3d").classList.toggle("fuera");
+  $("btn-sacar").textContent = fuera ? "Guardar el disco" : "Sacar el disco";
+});
+$("ficha-cerrar").addEventListener("click", () => $("ficha").close());
+$("ficha").addEventListener("close", () => { fichaActual = null; });
+$("ficha-agregar").addEventListener("click", () => {
+  alternarEnPedido(claveDisco(fichaActual));
+  pintarBotonFicha();
+  pintarCatalogo();
+});
+
 // ---------- Eventos ----------
 
 document.getElementById("catalogo").addEventListener("click", (e) => {
+  const abrir = e.target.closest("[data-ficha]");
+  if (abrir) return abrirFicha(abrir.dataset.ficha);
   const boton = e.target.closest(".btn--agregar");
   if (!boton) return;
   alternarEnPedido(boton.dataset.clave);
