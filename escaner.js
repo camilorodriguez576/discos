@@ -244,14 +244,57 @@ async function buscarEnMusicBrainz(codigo) {
     anio: (x.date || "").slice(0, 4),
     release: x.id,
     grupo: x["release-group"]?.id,
+    artistaId: x["artist-credit"]?.[0]?.artist?.id,
   }));
 }
 
-// Año de la PRIMERA edición del álbum (no el de esta copia)
-async function primerAnio(grupo) {
-  const r = await consultarMB(`https://musicbrainz.org/ws/2/release-group/${grupo}?fmt=json`);
-  if (!r.ok) return "";
-  return ((await r.json())["first-release-date"] || "").slice(0, 4);
+// ---------- Género automático ----------
+// MusicBrainz guarda los géneros que vota la comunidad ("rock (12)", "country rock (8)").
+// Los pasamos a pocas categorías claras en español, como las bateas de una disquería.
+// El orden importa: lo más específico va primero.
+const GENEROS_TIENDA = [
+  [/metal/, "Metal"],
+  [/punk|hardcore/, "Punk"],
+  [/grunge|alternative|indie|post-punk|shoegaze/, "Rock alternativo"],
+  [/rock en espa|rock nacional|rock argentino|rock peruano|rock mexicano/, "Rock en español"],
+  [/latin|salsa|cumbia|bolero|bachata|merengue|reggaet|tango|bossa|samba|andina|criolla/, "Latina"],
+  [/hip hop|rap|trap/, "Hip hop"],
+  [/ebm|electro|techno|house|trance|industrial|dance|edm|synth|new wave|ambient|drum and bass/, "Electrónica"],
+  [/pop rock|soft rock|aor|adult/, "Pop rock"],
+  [/rock/, "Rock"],
+  [/pop/, "Pop"],
+  [/jazz|swing|bossa/, "Jazz"],
+  [/blues/, "Blues"],
+  [/soul|funk|r&b|rhythm and blues|disco|motown/, "Soul y funk"],
+  [/reggae|ska|dub/, "Reggae"],
+  [/folk|country|bluegrass|singer-songwriter/, "Folk y country"],
+  [/classical|orchestral|opera|baroque|symphon/, "Clásica"],
+  [/soundtrack|score/, "Bandas sonoras"],
+];
+
+function generoTienda(generos) {
+  const ordenados = [...generos].sort((a, b) => (b.count || 0) - (a.count || 0));
+  for (const g of ordenados) {
+    const nombre = String(g.name).toLowerCase();
+    const regla = GENEROS_TIENDA.find(([patron]) => patron.test(nombre));
+    if (regla) return regla[1];
+  }
+  return "";
+}
+
+// Año de la PRIMERA edición del álbum (no el de esta copia) y su género.
+// Si el disco no tiene géneros votados, se usan los del artista.
+async function datosDelAlbum(grupo, artistaId) {
+  const r = await consultarMB(`https://musicbrainz.org/ws/2/release-group/${grupo}?inc=genres&fmt=json`);
+  if (!r.ok) return { anio: "", genero: "" };
+  const datos = await r.json();
+  const anio = (datos["first-release-date"] || "").slice(0, 4);
+  let genero = generoTienda(datos.genres || []);
+  if (!genero && artistaId) {
+    const ra = await consultarMB(`https://musicbrainz.org/ws/2/artist/${artistaId}?inc=genres&fmt=json`);
+    if (ra.ok) genero = generoTienda((await ra.json()).genres || []);
+  }
+  return { anio, genero };
 }
 
 // Prueba si una imagen existe cargándola
@@ -324,8 +367,10 @@ async function usarOpcion(o) {
   if (portada) $("vista-portada").style.backgroundImage = `url("${portada}")`;
 
   if (o.grupo) {
-    const anio = await primerAnio(o.grupo).catch(() => "");
-    if (yo === busquedaVigente && anio) campo("anio").value = anio;
+    const { anio, genero } = await datosDelAlbum(o.grupo, o.artistaId).catch(() => ({}));
+    if (yo !== busquedaVigente) return;
+    if (anio) campo("anio").value = anio;
+    if (genero) campo("genero").value = genero; // se puede corregir a mano antes de guardar
   }
 }
 
