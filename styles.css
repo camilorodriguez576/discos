@@ -1,16 +1,18 @@
 /* ============================================================
-   ESTILOS · tienda de discos limpia y moderna
+   ESTILOS · tienda de discos retro minimalista
    Idea: cada disco es un estuche de CD; el precio va como sticker
    amarillo sobre la portada, como en las bateas de una disquería.
    Los colores están en variables: cambias uno aquí y cambia en toda la página.
    ============================================================ */
 
 :root {
-  --papel: #eff1f5;        /* fondo: gris frío, como el plástico de un estuche */
-  --superficie: #ffffff;
-  --tinta: #14151b;
-  --tinta-2: #5a5f6c;
-  --linea: #d9dce4;
+  --papel: #f2efe8;        /* fondo: papel de librillo de CD */
+  --superficie: #fbfaf6;
+  --tinta: #17171b;
+  --tinta-2: #5d5a55;
+  --linea: #dcd6ca;
+  --naranja: #ff7a2f;      /* franjas retro del logo */
+  --rosa: #ff5fa2;
   --cobalto: #2340d9;      /* acento */
   --cobalto-suave: #e2e7ff;
   --sticker: #ffd23f;      /* sticker de precio */
@@ -23,8 +25,10 @@
   --wa-hover: #116b32;
   --velo: rgb(20 21 27 / .55);
   --sombra: 0 1px 2px rgb(20 21 27 / .06), 0 12px 32px rgb(20 21 27 / .10);
+  --sombra-dura: 3px 3px 0 var(--tinta);  /* sombra sólida de sticker */
 
   --f-display: "Bricolage Grotesque", "Arial Black", system-ui, sans-serif;
+  --f-marca: "Shrikhand", "Bricolage Grotesque", cursive;   /* la cursiva del logo */
   --f-texto: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
   --radio: 14px;
@@ -45,7 +49,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --papel: #0e0f13; --superficie: #17181f; --tinta: #eef0f4; --tinta-2: #a2a7b4; --linea: #2b2d37;
+    --papel: #111113; --superficie: #1a1a1e; --tinta: #f1eee8; --tinta-2: #aaa69f; --linea: #2f2e33;
     --cobalto: #8ea2ff; --cobalto-suave: #1c2352;
     --usado: #ff9a6b; --usado-suave: #3a1d10; --nuevo: #5fd394; --nuevo-suave: #10301f;
     --velo: rgb(0 0 0 / .7);
@@ -54,7 +58,7 @@
   }
 }
 :root[data-theme="dark"] {
-  --papel: #0e0f13; --superficie: #17181f; --tinta: #eef0f4; --tinta-2: #a2a7b4; --linea: #2b2d37;
+  --papel: #111113; --superficie: #1a1a1e; --tinta: #f1eee8; --tinta-2: #aaa69f; --linea: #2f2e33;
   --cobalto: #8ea2ff; --cobalto-suave: #1c2352;
   --usado: #ff9a6b; --usado-suave: #3a1d10; --nuevo: #5fd394; --nuevo-suave: #10301f;
   --velo: rgb(0 0 0 / .7);
@@ -667,4 +671,69 @@ body.con-pedido { padding-bottom: 90px; } /* para que la barra no tape el pie */
   .btn, .chip, select { min-height: 44px; }
   .chip, select { padding-inline: 16px; }
   .ficha__cerrar { width: 44px; height: 44px; }
+}
+
+/* ============================================================
+   TOQUES RETRO MINIMALISTAS
+   Pocos y en su sitio: grano de papel, sombras sólidas de sticker,
+   bordes de tinta y la franja de tres colores del logo.
+   ============================================================ */
+
+/* Grano de impresión muy sutil sobre toda la página */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: .05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+/* Franja de tres colores bajo la cabecera */
+.franja-retro {
+  height: 12px;
+  background: linear-gradient(var(--sticker) 0 33.3%, var(--naranja) 33.3% 66.6%, var(--rosa) 66.6%);
+}
+
+.marca span { font: 400 1.35rem var(--f-marca); letter-spacing: 0; }
+
+/* Botones: esquinas suaves, borde de tinta y sombra sólida que "se hunde" al tocar */
+.btn { border-radius: 8px; }
+.btn--agregar, .btn--wa:not(.btn--chico) {
+  border: 2px solid var(--tinta);
+  box-shadow: var(--sombra-dura);
+  transition: transform .12s, box-shadow .12s;
+}
+.btn--agregar:active, .btn--wa:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--tinta); }
+.btn--agregar { background: var(--superficie); color: var(--tinta); }
+.btn--agregar:hover { background: var(--sticker); color: var(--sticker-tinta); }
+.btn--agregar[aria-pressed="true"] { background: var(--nuevo); color: #fff; }
+.btn--linea { box-shadow: inset 0 0 0 1.5px var(--tinta); }
+
+.chip, select { border-radius: 8px; border-color: var(--tinta); }
+#buscar { border-radius: 10px; border: 2px solid var(--tinta); box-shadow: var(--sombra-dura); }
+
+/* Portadas con sombra sólida en vez de difusa */
+.portada { border-radius: 3px; box-shadow: 4px 4px 0 var(--tinta); }
+.disco__abrir:hover .portada { box-shadow: 7px 7px 0 var(--tinta); }
+.sticker { box-shadow: 2px 2px 0 var(--sticker-tinta); border: 2px solid var(--sticker-tinta); }
+.disco__num { color: var(--cobalto); font-weight: 700; }
+
+/* Cómo comprar y datos: tarjetas de papel con borde de tinta */
+.info > div { border: 2px solid var(--tinta); border-radius: 8px; box-shadow: var(--sombra-dura); }
+.como { border-top-width: 3px; }
+
+/* Ventanas: borde de tinta */
+.ficha, .resumen { border: 2px solid var(--tinta); box-shadow: 8px 8px 0 var(--tinta); }
+.barra-pedido { border-radius: 12px; box-shadow: 4px 4px 0 var(--sticker); }
+
+/* Estuche decorativo de la portada con las franjas del logo */
+.arte__estuche {
+  border-radius: 3px;
+  box-shadow: 6px 6px 0 var(--tinta);
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / .35) 0 5%, transparent 5.5%),
+    linear-gradient(transparent 0 58%, var(--sticker) 58% 66%, var(--naranja) 66% 74%, var(--rosa) 74% 82%, transparent 82%),
+    var(--cobalto);
 }

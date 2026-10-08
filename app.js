@@ -103,7 +103,7 @@ function tarjeta(d) {
       <div class="disco__info">
         <h3 class="disco__album" data-ficha="${c}">${escapar(d.album)}</h3>
         <p class="disco__artista">${escapar(d.artista)}</p>
-        <p class="disco__meta mono">${[d.anio, d.genero].filter(Boolean).map(escapar).join(" · ")}</p>
+        <p class="disco__meta mono"><span class="disco__num">Nº ${String(d.num).padStart(3, "0")}</span> · ${[d.anio, d.genero].filter(Boolean).map(escapar).join(" · ")}</p>
       </div>
       <button type="button" class="btn btn--agregar" data-clave="${c}"
               aria-pressed="${enPedido}">${enPedido ? "✓ En tu pedido" : "Agregar al pedido"}</button>
@@ -622,6 +622,8 @@ async function iniciar() {
     contador.textContent = "No pudimos cargar el catálogo. Revisa tu conexión o escríbenos por WhatsApp.";
     return;
   }
+  // Número de catálogo de cada disco, en el orden de la hoja (como en una disquería)
+  disponibles.forEach((d, i) => { d.num = i + 1; });
   llenarGeneros();
   recuperarPedido();
   pintarCatalogo();
