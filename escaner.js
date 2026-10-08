@@ -390,7 +390,6 @@ form.addEventListener("submit", async (e) => {
     precio: precio > 0 ? precio : "",
     detalle: campo("detalle").value.trim(),
     portada: discoActual.portada,
-    novedad: campo("novedad").checked,
   };
   guardarLS(PREF_LS, JSON.stringify({ estado: disco.estado, genero: disco.genero }));
 
@@ -519,7 +518,7 @@ $("btn-importar").addEventListener("click", async () => {
   for (const [i, d] of pendientes.entries()) {
     boton.textContent = `Guardando ${i + 1} de ${pendientes.length}…`;
     const disco = { codigo: "", artista: d.artista, album: d.album, anio: d.anio, genero: d.genero,
-      estado: d.estado, precio: d.precio, detalle: "", portada: "", novedad: false };
+      estado: d.estado, precio: d.precio, detalle: "", portada: "" };
     try {
       const r = await enviar("agregar", { disco });
       if (!r.ok) throw new Error(r.error);

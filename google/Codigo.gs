@@ -11,10 +11,23 @@ const HOJA = "Discos";
 
 // Primero las columnas que papá usa; después las técnicas (quedan ocultas)
 const COLUMNAS = [
-  "artista", "album", "precio", "estado", "vendido", "novedad", "detalle",
-  "genero", "anio", "codigo", "portada", "id", "fecha_alta", "fecha_venta",
+  "artista", "album", "estado", "precio", "vendido", "fecha_venta", "detalle",
+  "genero", "anio", "codigo", "portada", "id", "fecha_alta",
 ];
 const VISIBLES = 7; // de "artista" a "detalle"
+
+// Títulos que se ven en la hoja (las columnas técnicas quedan con su nombre interno)
+const TITULOS = {
+  artista: "Artista", album: "Álbum", estado: "Estado", precio: "Precio",
+  vendido: "Vendido", fecha_venta: "Fecha de venta", detalle: "Comentario",
+};
+// De un título de la hoja a su nombre interno (sirve con títulos nuevos y viejos)
+const aClave = (titulo) =>
+  Object.keys(TITULOS).find((k) => TITULOS[k] === titulo) || String(titulo).trim();
+
+// Un disco sale como "Llegó" en la tienda durante estos días desde que se escaneó
+const DIAS_NOVEDAD = 15;
+
 const col = (nombre) => COLUMNAS.indexOf(nombre) + 1;
 const letra = (nombre) => String.fromCharCode(64 + col(nombre)); // 1 -> A
 
@@ -53,7 +66,7 @@ function prepararHoja() {
 
   // 1. Guardar los discos que ya hay, reacomodados al orden nuevo de columnas
   const datos = hoja.getDataRange().getValues();
-  const cabecera = datos[0] || [];
+  const cabecera = (datos[0] || []).map(aClave);
   const filas = datos.slice(1)
     .map((f) => Object.fromEntries(cabecera.map((c, i) => [c, f[i]])))
     .filter((d) => d.artista !== undefined && d.artista !== "")
@@ -61,7 +74,6 @@ function prepararHoja() {
       // Versión anterior: tenía "disponible" en vez de "vendido"
       if (!("vendido" in d) && "disponible" in d) d.vendido = d.disponible === false;
       d.vendido = d.vendido === true;
-      d.novedad = d.novedad === true;
       return COLUMNAS.map((c) => d[c] ?? "");
     });
 
@@ -75,11 +87,12 @@ function prepararHoja() {
   const filasHoja = hoja.getMaxRows() - 1;
   hoja.getRange(2, col("codigo"), filasHoja).setNumberFormat("@"); // texto: no perder ceros
   hoja.getRange(2, col("precio"), filasHoja).setNumberFormat('"S/ "0');
+  hoja.getRange(2, col("fecha_venta"), filasHoja).setNumberFormat("dd/mm/yyyy");
 
-  hoja.getRange(1, 1, 1, COLUMNAS.length).setValues([COLUMNAS]);
+  hoja.getRange(1, 1, 1, COLUMNAS.length).setValues([COLUMNAS.map((c) => TITULOS[c] || c)]);
   if (filas.length) {
     hoja.getRange(2, 1, filas.length, COLUMNAS.length).setValues(filas);
-    const casillas = hoja.getRange(2, col("vendido"), filas.length, 2); // vendido y novedad
+    const casillas = hoja.getRange(2, col("vendido"), filas.length, 1);
     const valores = casillas.getValues();
     casillas.insertCheckboxes();
     casillas.setValues(valores);
@@ -103,16 +116,16 @@ function darFormato(hoja) {
   hoja.setRowHeight(1, 32);
 
   // Anchos cómodos para lo que papá usa
-  [["artista", 200], ["album", 260], ["precio", 90], ["estado", 100], ["vendido", 80], ["novedad", 80], ["detalle", 260]]
+  [["artista", 200], ["album", 260], ["estado", 90], ["precio", 90], ["vendido", 80], ["fecha_venta", 130], ["detalle", 260]]
     .forEach(([c, ancho]) => hoja.setColumnWidth(col(c), ancho));
-  hoja.getRange(2, col("precio"), filas, 4).setHorizontalAlignment("center"); // precio a novedad
+  hoja.getRange(1, col("estado"), filas + 1, 4).setHorizontalAlignment("center"); // estado a fecha de venta
 
   hoja.getRange(2, col("estado"), filas).setDataValidation(
     SpreadsheetApp.newDataValidation().requireValueInList(["Usado", "Nuevo"]).setAllowInvalid(false).build()
   );
 
   // Colores: vendidos en gris tachado, sin precio en amarillo
-  const datos = hoja.getRange(`A2:${letra("fecha_venta")}`);
+  const datos = hoja.getRange(`A2:${letra("detalle")}`);
   const precio = hoja.getRange(`${letra("precio")}2:${letra("precio")}`);
   hoja.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule()
@@ -180,11 +193,18 @@ function doGet(e) {
 function leerDiscos(incluirVendidos) {
   const hoja = SpreadsheetApp.getActive().getSheetByName(HOJA);
   if (!hoja) return [];
-  const [cabecera, ...filas] = hoja.getDataRange().getValues();
+  const [titulos, ...filas] = hoja.getDataRange().getValues();
+  const cabecera = titulos.map(aClave);
+  const limite = Date.now() - DIAS_NOVEDAD * 24 * 60 * 60 * 1000;
   return filas
-    .map((fila) => Object.fromEntries(cabecera.map((c, i) => [c, fila[i] instanceof Date ? fila[i].toISOString().slice(0, 10) : fila[i]])))
+    .map((fila) => Object.fromEntries(cabecera.map((c, i) => [c, fila[i]])))
     .filter((d) => d.artista !== "" && (incluirVendidos || d.vendido !== true))
-    .map(({ fecha_venta, ...d }) => d); // la fecha de venta no se publica
+    .map(({ fecha_venta, ...d }) => { // la fecha de venta no se publica
+      const alta = d.fecha_alta instanceof Date ? d.fecha_alta : null;
+      d.novedad = !!alta && alta.getTime() >= limite; // "Llegó" los primeros días
+      if (alta) d.fecha_alta = alta.toISOString().slice(0, 10);
+      return d;
+    });
 }
 
 // ---------- Escritura: el escáner envía un disco nuevo ----------
@@ -218,7 +238,6 @@ function agregar(disco) {
       precio: Number(disco.precio) > 0 ? Number(disco.precio) : "",
       anio: Number(disco.anio) || "",
       vendido: false,
-      novedad: disco.novedad === true,
       fecha_alta: new Date(),
       fecha_venta: "",
     };
@@ -227,9 +246,7 @@ function agregar(disco) {
     hoja.appendRow(COLUMNAS.map((c) => seguro(valores[c] ?? "")));
 
     const fila = hoja.getLastRow();
-    const casillas = hoja.getRange(fila, col("vendido"), 1, 2); // vendido y novedad
-    casillas.insertCheckboxes();
-    casillas.setValues([[false, valores.novedad]]);
+    hoja.getRange(fila, col("vendido")).insertCheckboxes().setValue(false);
     return id;
   } finally {
     lock.releaseLock();
