@@ -51,13 +51,16 @@ async function enviar(accion, datos = {}) {
   return r.json();
 }
 
+// Compara códigos sin los ceros iniciales: la hoja a veces los pierde (093… -> 93…)
+const claveCodigo = (c) => String(c || "").replace(/^0+/, "");
+
 async function cargarExistentes() {
   try {
-    const r = await fetch(CONFIG.hojaURL);
+    const r = await fetch(`${CONFIG.hojaURL}?t=${Date.now()}`, { cache: "no-store" });
     const { discos } = await r.json();
     existentes = new Map();
     for (const d of discos) {
-      const c = String(d.codigo || "");
+      const c = claveCodigo(d.codigo);
       if (c) existentes.set(c, (existentes.get(c) || 0) + 1);
     }
   } catch { /* si falla, solo no avisamos de duplicados */ }
@@ -239,7 +242,7 @@ function abrirFormulario({ codigo }, opciones) {
   $("vista-codigo").textContent = codigo ? `Código: ${codigo}` : "Disco sin código de barras";
   $("vista-portada").style.backgroundImage = "";
 
-  const copias = codigo ? existentes.get(codigo) || 0 : 0;
+  const copias = codigo ? existentes.get(claveCodigo(codigo)) || 0 : 0;
   $("vista-duplicado").hidden = copias === 0;
   $("vista-duplicado").textContent = `Ya tienes ${copias} en venta. Si es otra copia, guárdalo igual.`;
 
@@ -372,7 +375,8 @@ form.addEventListener("submit", async (e) => {
   try {
     const r = await enviar("agregar", { disco });
     if (!r.ok) throw new Error(r.error);
-    if (disco.codigo) existentes.set(disco.codigo, (existentes.get(disco.codigo) || 0) + 1);
+    const c = claveCodigo(disco.codigo);
+    if (c) existentes.set(c, (existentes.get(c) || 0) + 1);
     agregarReciente(disco, false);
     toast(`Guardado: ${disco.album}`);
     cerrarFormulario();

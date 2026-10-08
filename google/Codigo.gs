@@ -213,6 +213,8 @@ function agregar(disco) {
     const valores = {
       ...disco,
       id,
+      // El apóstrofo guarda el código como texto, sin perder los ceros iniciales
+      codigo: disco.codigo ? "'" + String(disco.codigo) : "",
       precio: Number(disco.precio) > 0 ? Number(disco.precio) : "",
       anio: Number(disco.anio) || "",
       vendido: false,

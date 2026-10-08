@@ -274,7 +274,8 @@ document.getElementById("orden").addEventListener("change", (e) => {
 // Trae los discos de la hoja de Google; si no hay hoja configurada, usa los de ejemplo
 async function cargarDiscos() {
   if (!CONFIG.hojaURL) return DISCOS.filter((d) => d.disponible !== false);
-  const datos = await jsonp(CONFIG.hojaURL, 15000);
+  // "?t=..." cambia en cada visita para que el navegador no muestre una lista guardada vieja
+  const datos = await jsonp(`${CONFIG.hojaURL}?t=${Date.now()}`, 15000);
   if (!datos || !Array.isArray(datos.discos)) throw new Error("No se pudo leer la hoja");
   return datos.discos.map((d) => ({
     ...d,
